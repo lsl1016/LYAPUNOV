@@ -18,7 +18,7 @@ classdef Simulator < handle
                 totalTimeSlots = 1000;
             end
             
-            obj.MEC = mec();
+            obj.MEC = MEC();
             obj.TaskManager = TaskManager();
             obj.LyapunovManager = LyapunovManager();
             obj.Scheduler = Scheduler(constants.GreedySchedule, constants.VV_DEFAULT); % 默认使用贪心调度
@@ -27,7 +27,7 @@ classdef Simulator < handle
             obj.Statistics = SimulationStats();
             
             % 初始化任务类型统计
-            K = constants.getK();
+            K = constants.K();
             for i = 1:K
                 obj.Statistics.TaskTypeStats(i) = TaskTypeStat();
             end
@@ -101,7 +101,7 @@ classdef Simulator < handle
             
             % 3. 时隙开始检查：如果任务类型缓存命中或正在计算，清空该类型积压队列
             % 按照design.txt："相同类型的任务一旦缓存命中 或 正在虚拟节点上计算，当前类型的所有任务可以直接以0延迟计算成功"
-            K = constants.getK();
+            K = constants.K();
             for taskType = 1:K
                 backlogCount = obj.TaskManager.getBacklogCount(taskType);
                 if backlogCount > 0
@@ -112,12 +112,13 @@ classdef Simulator < handle
                         stat = obj.Statistics.TaskTypeStats(taskType);
                         stat.CacheHits = stat.CacheHits + backlogCount;
                         stat.Completed = stat.Completed + backlogCount;
-                        obj.TaskManager.removeTasksFromBacklog(taskType, backlogCount);
-                    elseif obj.MEC.isTaskTypeComputing(taskType)
-                        % 正在计算中，该类型所有积压任务直接完成
-                        obj.Statistics.TotalTasksCompleted = obj.Statistics.TotalTasksCompleted + backlogCount;
-                        stat = obj.Statistics.TaskTypeStats(taskType);
-                        stat.Completed = stat.Completed + backlogCount;
+                        
+                        % 记录缓存命中任务的总优先级
+                        if obj.TaskManager.TaskTypes.isKey(taskType)
+                            tt = obj.TaskManager.TaskTypes(taskType);
+                            stat.CacheHitPrioritySum = stat.CacheHitPrioritySum + (backlogCount * tt.Priority);
+                        end
+                        
                         obj.TaskManager.removeTasksFromBacklog(taskType, backlogCount);
                     end
                 end
@@ -210,7 +211,7 @@ classdef Simulator < handle
             
             % 计算平均队列长度
             totalLyapunovQueueLength = 0;
-            K = constants.getK();
+            K = constants.K();
             for i = 1:K
                 totalLyapunovQueueLength = totalLyapunovQueueLength + obj.LyapunovManager.getQueueLength(i);
             end

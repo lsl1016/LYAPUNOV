@@ -6,6 +6,7 @@ classdef TaskTypeStat < handle
         Completed   % 完成数量
         Dropped     % 丢弃数量
         CacheHits   % 缓存命中数量
+        CacheHitPrioritySum  % 缓存命中任务总优先级
     end
     
     methods
@@ -15,6 +16,7 @@ classdef TaskTypeStat < handle
             obj.Completed = 0;
             obj.Dropped = 0;
             obj.CacheHits = 0;
+            obj.CacheHitPrioritySum = 0;
         end
     end
 end

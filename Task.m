@@ -1,4 +1,4 @@
-classdef task < handle
+classdef Task < handle
     % Task 表示一个具体的任务实例
     
     properties
@@ -15,7 +15,7 @@ classdef task < handle
     end
     
     methods
-        function obj = task(id, taskType, priority, skr, mkr, ck, metaK, createTime)
+        function obj = Task(id, taskType, priority, skr, mkr, ck, metaK, createTime)
             % 构造函数
             obj.ID = id;
             obj.TaskType = taskType;

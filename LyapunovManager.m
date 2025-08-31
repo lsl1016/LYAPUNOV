@@ -11,7 +11,7 @@ classdef LyapunovManager < handle
             obj.Queues = containers.Map('KeyType', 'int32', 'ValueType', 'any');
             
             % 为每个任务类型初始化队列
-            K = Constants.getK();
+            K = constants.K();
             for i = 1:K
                 obj.Queues(i) = LyapunovQueue(i);
             end

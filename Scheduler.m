@@ -31,7 +31,9 @@ classdef Scheduler < handle
                     results = obj.greedySchedule(mec, taskManager);
             end
         end
-        
+
+        % TODO: 调整参数，修正算法
+
         function results = greedySchedule(obj, mec, taskManager)
             % 贪心调度策略（原有简单策略）
             results = {};
@@ -59,7 +61,9 @@ classdef Scheduler < handle
                 % 计算fkr
                 taskTypeInfo = taskManager.TaskTypes(task.TaskType);
                 
-                if mec.scheduleTask(task.TaskType, node.ID, task.MKR, task.Ck)
+                % 生成随机的mkr值（因为TaskValue2中没有存储）
+                mkr = randi([constants.MIN_MKR, constants.MAX_MKR]);
+                if mec.scheduleTask(task.TaskType, node.ID, mkr, taskTypeInfo.Ck)
                     backlogCount = taskManager.getBacklogCount(task.TaskType);
                     results{end+1} = SchedulingResult(task.TaskType, node.ID, 0, backlogCount);
                     nodeIndex = nodeIndex + 1;
@@ -99,17 +103,19 @@ classdef Scheduler < handle
                 
                 for j = 1:length(idleNodes)
                     node = idleNodes{j};
-                    % 计算bkr(t)
-                    bkr = TaskManager.calculateBKR(task.MKR, task.Ck, node.ComputeFrequency, false);
+                    % 计算bkr(t) - 使用taskTypeInfo获取正确的值
+                    taskTypeInfo = taskManager.TaskTypes(task.TaskType);
+                    mkr_temp = randi([constants.MIN_MKR, constants.MAX_MKR]); % 临时生成mkr值
+                    bkr = TaskManager.calculateBKR(mkr_temp, taskTypeInfo.Ck, node.ComputeFrequency, false);
                     
                     % 计算能耗成本
                     frequencyGHz = node.ComputeFrequency / 1000.0;
-                    energyCost = Constants.AFIE * (frequencyGHz^3) * Constants.NMT * Constants.Tslot;
+                    energyCost = constants.AFIE * (frequencyGHz^3) * constants.NMT * constants.Tslot;
                     
                     % 李雅普诺夫优化权重计算：
                     % 目标函数：最大化 V*(收益-成本) - Q*服务增益
                     % 收益 = WCOM * 优先级，成本 = 能耗成本
-                    immediateBenefit = Constants.WCOM * task.Priority - energyCost;
+                    immediateBenefit = constants.WCOM * task.Priority - energyCost;
                     stabilityTerm = queueLength * bkr;
                     
                     % 最终目标：最大化 V*immediateBenefit - stabilityTerm
@@ -127,9 +133,10 @@ classdef Scheduler < handle
                 if i <= length(sortedTasks) && nodeIndex ~= -1 && nodeIndex <= length(idleNodes)
                     task = sortedTasks{i};
                     node = idleNodes{nodeIndex};
-                    fkr = taskManager.TaskTypes(task.TaskType).Ck * 20;
+                    taskTypeInfo = taskManager.TaskTypes(task.TaskType);
+                    mkr = randi([constants.MIN_MKR, constants.MAX_MKR]);
                     
-                    if mec.scheduleTask(task.TaskType, node.ID, fkr)
+                    if mec.scheduleTask(task.TaskType, node.ID, mkr, taskTypeInfo.Ck)
                         % 获取该类型的积压任务数量
                         backlogCount = taskManager.getBacklogCount(task.TaskType);
                         

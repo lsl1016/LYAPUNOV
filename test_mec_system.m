@@ -25,14 +25,14 @@ function test_basic_components()
         % 测试常量
         fprintf('  - 测试常量定义... ');
         assert(Constants.V == 5, '虚拟节点数量错误');
-        assert(Constants.getK() == 20, '任务类型数量错误');
+        assert(Constants.K() == 20, '任务类型数量错误');
         fprintf('通过\n');
         
         % 测试任务管理器
         fprintf('  - 测试任务管理器... ');
         tm = TaskManager();
         assert(~isempty(tm.TaskTypes), '任务类型未初始化');
-        assert(tm.TaskTypes.Count == Constants.getK(), '任务类型数量错误');
+        assert(tm.TaskTypes.Count == Constants.K(), '任务类型数量错误');
         task = tm.generateTask(1, 0);
         assert(~isempty(task), '任务生成失败');
         assert(task.TaskType == 1, '任务类型错误');
@@ -48,7 +48,7 @@ function test_basic_components()
         % 测试李雅普诺夫管理器
         fprintf('  - 测试李雅普诺夫管理器... ');
         lm = LyapunovManager();
-        assert(lm.Queues.Count == Constants.getK(), '队列数量错误');
+        assert(lm.Queues.Count == Constants.K(), '队列数量错误');
         assert(lm.getQueueLength(1) == 0, '初始队列长度应为0');
         fprintf('通过\n');
         
@@ -163,7 +163,3 @@ function quick_demo()
     fprintf('\n演示完成！\n');
 end
 
-% 主函数调用
-if nargin == 0
-    test_mec_system();
-end
