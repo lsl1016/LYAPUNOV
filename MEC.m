@@ -5,9 +5,6 @@ classdef mec < handle
         VirtualNodes        % 虚拟节点列表 (cell array)
         Cache               % 缓存映射，key为任务类型 (containers.Map)
         UsedCacheSize       % 已使用缓存大小 (Mbit)
-        Revenue             % 收益 (收入-代价)
-        Income              % 收入
-        Cost                % 代价
 
         AccessCount         % 每种任务类型的访问次数 (containers.Map)
         AccessFrequency     % 每种任务类型的访问频率 (containers.Map)
@@ -17,9 +14,12 @@ classdef mec < handle
         CacheInsertOrder    % 缓存插入顺序（用于FIFO） (array)
         CurrentTimeSlot     % 当前时隙
 
-
         CacheStrategy       % 缓存更新策略
         CacheEnabled        % 是否启用缓存功能
+
+        Revenue             % 收益 (收入-代价)
+        Income              % 收入
+        Cost                % 代价
     end
     
     methods
@@ -118,7 +118,7 @@ classdef mec < handle
             end
         end
         
-        function success = scheduleTask(obj, taskType, nodeID, fkr)
+        function success = scheduleTask(obj, taskType, nodeID, mkr, ck)
             % 将任务调度到指定虚拟节点
             if nodeID < 1 || nodeID > constants.V
                 success = false;
@@ -132,7 +132,7 @@ classdef mec < handle
             end
             
             % 计算需要的时隙数
-            requiredSlots = TaskManager.calculateWKR(fkr);
+            requiredSlots = TaskManager.calculateWKR(mkr, ck);
             
             % 调度任务
             node.IsIdle = false;

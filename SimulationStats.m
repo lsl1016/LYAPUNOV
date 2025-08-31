@@ -3,14 +3,18 @@ classdef SimulationStats < handle
     
     properties
         TotalTasksGenerated % 总生成任务数
+
         TotalTasksCompleted % 总完成任务数
         TotalTasksDropped   % 总丢弃任务数
 
         CacheHitCount       % 缓存命中次数
-        TotalCacheAccess    % 总缓存访问次数
+        TotalCacheAccess    % 总缓存访问次数（统计最后所有时隙总的信息）
         
         AverageLyapunovQueueLength % 李雅普诺夫队列平均长度
         AverageBacklogQueueLength  % 挤压队列平均长度
+
+        TotalRevenue        % 总收益
+        AverageRevenue      % 时间平均收益 （总收益/当前时隙数）
 
         TaskTypeStats       % 各任务类型统计 (containers.Map)
     end
@@ -25,6 +29,8 @@ classdef SimulationStats < handle
             obj.TotalCacheAccess = 0;
             obj.AverageLyapunovQueueLength = 0;
             obj.AverageBacklogQueueLength = 0;
+            obj.TotalRevenue = 0;
+            obj.AverageRevenue = 0;
             obj.TaskTypeStats = containers.Map('KeyType', 'int32', 'ValueType', 'any');
         end
     end

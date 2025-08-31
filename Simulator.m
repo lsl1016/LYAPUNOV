@@ -39,7 +39,7 @@ classdef Simulator < handle
         end
         
         function setScheduleStrategy(obj, algorithm, vv)
-            % 设置调度策略
+            % 设置调度策略 和 李雅普诺夫漂移参数
             if nargin < 3
                 vv = constants.VV_DEFAULT;
             end
@@ -181,6 +181,8 @@ classdef Simulator < handle
             
             % 9. 更新收益
             obj.MEC.updateRevenue(obj.TaskManager);
+            obj.Statistics.TotalRevenue = obj.Statistics.TotalRevenue + obj.MEC.Revenue;
+            obj.Statistics.AverageRevenue = obj.Statistics.TotalRevenue / (obj.CurrentTimeSlot + 1);
         end
         
         function printStatistics(obj)

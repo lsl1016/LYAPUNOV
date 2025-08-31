@@ -10,7 +10,7 @@ classdef Scheduler < handle
         function obj = Scheduler(algorithm, vv)
             % 构造函数
             if nargin < 2
-                vv = Constants.VV_DEFAULT;
+                vv = constants.VV_DEFAULT;
             end
             obj.Algorithm = algorithm;
             obj.LyapunovVV = vv;
@@ -19,13 +19,13 @@ classdef Scheduler < handle
         function results = scheduleTasks(obj, mec, taskManager, lyapunovManager)
             % 根据调度算法调度任务
             switch obj.Algorithm
-                case Constants.GreedySchedule
+                case constants.GreedySchedule
                     results = obj.greedySchedule(mec, taskManager);
-                case Constants.ShortTermSchedule
+                case constants.ShortTermSchedule
                     results = obj.shortTermSchedule(mec, taskManager);
-                case Constants.LyapunovSchedule
+                case constants.LyapunovSchedule
                     results = obj.lyapunovSchedule(mec, taskManager, lyapunovManager);
-                case Constants.NoCacheSchedule
+                case constants.NoCacheSchedule
                     results = obj.noCacheSchedule(mec, taskManager, lyapunovManager);
                 otherwise
                     results = obj.greedySchedule(mec, taskManager);
@@ -58,7 +58,6 @@ classdef Scheduler < handle
                 
                 % 计算fkr
                 taskTypeInfo = taskManager.TaskTypes(task.TaskType);
-                fkr = taskTypeInfo.Ck * 20; % 假设平均输入数据量
                 
                 if mec.scheduleTask(task.TaskType, node.ID, task.MKR, task.Ck)
                     backlogCount = taskManager.getBacklogCount(task.TaskType);
@@ -240,7 +239,6 @@ classdef Scheduler < handle
         end
         
         function results = shortTermSchedule(obj, mec, taskManager)
-            % 短期调度算法的实现（简化版）
             results = obj.greedySchedule(mec, taskManager);
         end
         
