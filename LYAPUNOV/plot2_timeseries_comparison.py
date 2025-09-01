@@ -1,0 +1,352 @@
+"""
+plot2_timeseries_comparison.py - 时序性能对比折线图
+
+包含两组独立的折线图：
+第一组：四种调度算法的时序性能对比（统一使用背包缓存算法）
+第二组：五种缓存算法的时序性能对比（使用李雅普诺夫调度算法）
+
+从MATLAB版本转换而来，保留所有原始逻辑和注释
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 配置中文字体支持
+try:
+    from .font_config import setup_chinese_font
+except ImportError:
+    from font_config import setup_chinese_font
+
+# 设置中文字体
+setup_chinese_font()
+
+# 处理导入问题
+try:
+    from .constants import Constants
+    from .simulator import Simulator
+except ImportError:
+    from constants import Constants
+    from simulator import Simulator
+
+
+def plot2_timeseries_comparison():
+    """时序性能对比实验"""
+    print('=== 开始时序性能对比实验 ===')
+    
+    # 第一组实验：四种调度算法对比
+    print('\n--- 第一组：调度算法对比 ---')
+    plot_scheduling_algorithms_comparison()
+    
+    # 第二组实验：五种缓存算法对比
+    print('\n--- 第二组：缓存算法对比 ---')
+    plot_cache_algorithms_comparison()
+    
+    print('=== 时序性能对比实验完成 ===')
+
+
+def plot_scheduling_algorithms_comparison():
+    """第一组：横坐标为时隙（0——Tsolt），纵坐标分别为MEC时间平均收益、任务积压队列的平均长度
+    图例为：四种调度算法，缓存更新统一使用背包算法，最后一种调度应该是不启用缓存的"""
+    
+    # 导入必要的库
+    import random
+    import numpy as np
+    
+    # 实验参数设置
+    total_time_slots = 500      # 仿真时隙数
+    Constants.K(40)             # 任务类型数量
+    Constants.N(20)             # 每时隙生成任务数
+    
+    # 调度算法设置
+    scheduling_algorithms = [
+        Constants.GreedySchedule,      # 贪心调度
+        Constants.ShortTermSchedule,   # 短期调度
+        Constants.LyapunovSchedule,    # 李雅普诺夫调度
+        Constants.NoCacheSchedule      # 无缓存调度
+    ]
+    
+    algorithm_names = [
+        '贪心调度+背包缓存',
+        '短期调度+背包缓存',
+        '李雅普诺夫调度+背包缓存',
+        '无缓存调度'
+    ]
+    
+    # 定义线型和标记符号（参考绘图样式模板）
+    line_styles = ['-', '-.', '--', ':']
+    markers = ['+', 'o', '*', 'x']
+    line_width = 1.4
+    
+    num_algorithms = len(scheduling_algorithms)
+    
+    # 存储每个算法的时序数据
+    time_series_revenue = np.zeros((num_algorithms, total_time_slots))
+    time_series_backlog = np.zeros((num_algorithms, total_time_slots))
+    
+    # 运行仿真实验
+    for alg_idx, algorithm in enumerate(scheduling_algorithms):
+        alg_name = algorithm_names[alg_idx]
+        
+        print(f'正在测试调度算法: {alg_name} ({alg_idx+1}/{num_algorithms})...')
+        
+        # 设置固定随机种子，确保所有算法面对相同的环境和任务
+        random.seed(42)  # 所有算法使用相同的种子
+        np.random.seed(42)
+        
+        # 创建仿真器
+        sim = Simulator(total_time_slots)
+        
+        # 设置调度策略
+        sim.set_schedule_strategy(algorithm, Constants.VV_DEFAULT)
+        
+        # 设置缓存策略（无缓存调度除外）
+        if algorithm != Constants.NoCacheSchedule:
+            sim.set_cache_strategy(Constants.Knapsack)
+        else:
+            sim.MEC.set_cache_enabled(False)
+        
+        # 运行仿真并记录每个时隙的数据
+        sim.MEC.update_time_slot(0)
+        
+        for t in range(total_time_slots):
+            sim.CurrentTimeSlot = t
+            sim.run_time_slot()
+            
+            # 记录当前时隙的数据
+            time_series_revenue[alg_idx, t] = sim.Statistics.AverageRevenue
+            
+            # 计算积压队列平均长度（当前时隙积压队列总长度 ）
+            total_backlog = 0
+            K = Constants.K()
+            for k in range(1, K + 1):
+                total_backlog += sim.TaskManager.get_backlog_count(k)
+            time_series_backlog[alg_idx, t] = total_backlog 
+        
+        print(f'完成，最终平均收益: {time_series_revenue[alg_idx, -1]:.4f}, '
+              f'最终平均积压长度: {time_series_backlog[alg_idx, -1]:.2f}')
+    
+    # 绘制第一组图：MEC时间平均收益
+    plt.figure(figsize=(12, 6))
+    time_slots = np.arange(1, total_time_slots + 1)
+    
+    for alg_idx in range(num_algorithms):
+        # 每50个点显示一个标记
+        marker_indices = list(range(0, total_time_slots, 50))
+        plt.plot(time_slots, time_series_revenue[alg_idx, :],
+                 label=algorithm_names[alg_idx],
+                 linestyle=line_styles[alg_idx],
+                 linewidth=line_width,
+                 marker=markers[alg_idx],
+                 markevery=marker_indices,
+                 markersize=6)
+    
+    plt.xlabel('时隙')
+    plt.ylabel('MEC时间平均收益')
+    plt.title('不同调度算法的MEC时间平均收益对比')
+    plt.legend(loc='best')
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+    
+    # 绘制第一组图：任务积压队列的平均长度
+    plt.figure(figsize=(12, 6))
+    
+    for alg_idx in range(num_algorithms):
+        marker_indices = list(range(0, total_time_slots, 50))
+        plt.plot(time_slots, time_series_backlog[alg_idx, :],
+                 label=algorithm_names[alg_idx],
+                 linestyle=line_styles[alg_idx],
+                 linewidth=line_width,
+                 marker=markers[alg_idx],
+                 markevery=marker_indices,
+                 markersize=6)
+    
+    plt.xlabel('时隙')
+    plt.ylabel('任务积压队列的平均长度')
+    plt.title('不同调度算法的任务积压队列平均长度对比')
+    plt.legend(loc='best')
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+    
+    # 保存第一组数据（可选）
+    # import pandas as pd
+    # results_dict = {'TimeSlot': time_slots}
+    # for alg_idx in range(num_algorithms):
+    #     clean_name = algorithm_names[alg_idx].replace('+', '_').replace('调度', '')
+    #     results_dict[f'Revenue_{clean_name}'] = time_series_revenue[alg_idx, :]
+    #     results_dict[f'Backlog_{clean_name}'] = time_series_backlog[alg_idx, :]
+    # 
+    # results_df = pd.DataFrame(results_dict)
+    # filename = f'plot2_group1_scheduling_results_{pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")}.csv'
+    # results_df.to_csv(filename, index=False)
+    # print(f'第一组结果已保存到文件: {filename}')
+
+
+def plot_cache_algorithms_comparison():
+    """第二组：K=40, N=20, VV=1
+    横坐标为时隙（0——Tsolt），纵坐标分别为当前时隙MEC的时间平均收益、任务积压队列的平均长度、MEC缓存的任务类型总价值
+    图例为：调度算法使用LyapunovSchedule + 五种不同的缓存更新算法（FIFO、LRU、LFU、Priority、Knapsack）"""
+    
+    # 导入必要的库
+    import random
+    import numpy as np
+    
+    # 实验参数设置
+    total_time_slots = 500      # 仿真时隙数
+    Constants.K(40)             # 任务类型数量
+    Constants.N(20)             # 每时隙生成任务数
+    vv_parameter = 1.0          # 李雅普诺夫参数VV=1
+    
+    # 缓存算法设置
+    cache_algorithms = [
+        Constants.FIFO,
+        Constants.LRU,
+        Constants.LFU,
+        Constants.Priority,
+        Constants.Knapsack
+    ]
+    
+    cache_names = [
+        'FIFO缓存',
+        'LRU缓存',
+        'LFU缓存',
+        'Priority缓存',
+        'Knapsack缓存'
+    ]
+    
+    # 定义线型和标记符号
+    line_styles = ['-', '-.', '--', ':', '-']
+    markers = ['+', 'o', '*', 'x', 's']
+    line_width = 1.4
+    
+    num_cache_algs = len(cache_algorithms)
+    
+    # 存储每个缓存算法的时序数据
+    cache_time_series_revenue = np.zeros((num_cache_algs, total_time_slots))
+    cache_time_series_backlog = np.zeros((num_cache_algs, total_time_slots))
+    cache_time_series_value = np.zeros((num_cache_algs, total_time_slots))
+    
+    # 运行仿真实验
+    for cache_idx, cache_alg in enumerate(cache_algorithms):
+        cache_name = cache_names[cache_idx]
+        
+        print(f'正在测试缓存算法: {cache_name} ({cache_idx+1}/{num_cache_algs})...')
+        
+        # 设置固定随机种子，确保所有算法面对相同的环境和任务
+        random.seed(42)  # 所有算法使用相同的种子
+        np.random.seed(42)
+        
+        # 创建仿真器
+        sim = Simulator(total_time_slots)
+        
+        # 设置调度策略为李雅普诺夫调度，VV=1
+        sim.set_schedule_strategy(Constants.LyapunovSchedule, vv_parameter)
+        
+        # 设置缓存策略
+        sim.set_cache_strategy(cache_alg)
+        
+        # 运行仿真并记录每个时隙的数据
+        sim.MEC.update_time_slot(0)
+        
+        for t in range(total_time_slots):
+            sim.CurrentTimeSlot = t
+            sim.run_time_slot()
+            
+            # 记录当前时隙的数据
+            cache_time_series_revenue[cache_idx, t] = sim.Statistics.AverageRevenue
+            
+            total_backlog = 0
+            K = Constants.K()
+            for k in range(1, K + 1):
+                total_backlog += sim.TaskManager.get_backlog_count(k)
+            cache_time_series_backlog[cache_idx, t] = total_backlog
+            
+            # 计算缓存总价值
+            cache_time_series_value[cache_idx, t] = sim.MEC.get_cache_total_value(sim.TaskManager)
+        
+        print(f'完成，最终平均收益: {cache_time_series_revenue[cache_idx, -1]:.4f}, '
+              f'最终平均积压长度: {cache_time_series_backlog[cache_idx, -1]:.2f}, '
+              f'最终缓存价值: {cache_time_series_value[cache_idx, -1]:.2f}')
+    
+    # 绘制第二组图：MEC时间平均收益
+    plt.figure(figsize=(12, 6))
+    time_slots = np.arange(1, total_time_slots + 1)
+    
+    for cache_idx in range(num_cache_algs):
+        marker_indices = list(range(0, total_time_slots, 50))
+        plt.plot(time_slots, cache_time_series_revenue[cache_idx, :],
+                 label=cache_names[cache_idx],
+                 linestyle=line_styles[cache_idx],
+                 linewidth=line_width,
+                 marker=markers[cache_idx],
+                 markevery=marker_indices,
+                 markersize=6)
+    
+    plt.xlabel('时隙')
+    plt.ylabel('MEC时间平均收益')
+    plt.title('不同缓存算法的MEC时间平均收益对比 (李雅普诺夫调度, VV=1)')
+    plt.legend(loc='best')
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+    
+    # 绘制第二组图：任务积压队列的平均长度
+    plt.figure(figsize=(12, 6))
+    
+    for cache_idx in range(num_cache_algs):
+        marker_indices = list(range(0, total_time_slots, 50))
+        plt.plot(time_slots, cache_time_series_backlog[cache_idx, :],
+                 label=cache_names[cache_idx],
+                 linestyle=line_styles[cache_idx],
+                 linewidth=line_width,
+                 marker=markers[cache_idx],
+                 markevery=marker_indices,
+                 markersize=6)
+    
+    plt.xlabel('时隙')
+    plt.ylabel('任务积压队列的平均长度')
+    plt.title('不同缓存算法的任务积压队列平均长度对比 (李雅普诺夫调度, VV=1)')
+    plt.legend(loc='best')
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+    
+    # 绘制第二组图：MEC缓存的任务类型总价值
+    plt.figure(figsize=(12, 6))
+    
+    for cache_idx in range(num_cache_algs):
+        marker_indices = list(range(0, total_time_slots, 50))
+        plt.plot(time_slots, cache_time_series_value[cache_idx, :],
+                 label=cache_names[cache_idx],
+                 linestyle=line_styles[cache_idx],
+                 linewidth=line_width,
+                 marker=markers[cache_idx],
+                 markevery=marker_indices,
+                 markersize=6)
+    
+    plt.xlabel('时隙')
+    plt.ylabel('MEC缓存的任务类型总价值')
+    plt.title('不同缓存算法的缓存总价值对比 (李雅普诺夫调度, VV=1)')
+    plt.legend(loc='best')
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+    
+    # 保存第二组数据（可选）
+    # import pandas as pd
+    # results_dict = {'TimeSlot': time_slots}
+    # for cache_idx in range(num_cache_algs):
+    #     clean_name = cache_names[cache_idx].replace('缓存', '')
+    #     results_dict[f'Revenue_{clean_name}'] = cache_time_series_revenue[cache_idx, :]
+    #     results_dict[f'Backlog_{clean_name}'] = cache_time_series_backlog[cache_idx, :]
+    #     results_dict[f'CacheValue_{clean_name}'] = cache_time_series_value[cache_idx, :]
+    # 
+    # results_df = pd.DataFrame(results_dict)
+    # filename = f'plot2_group2_cache_results_{pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")}.csv'
+    # results_df.to_csv(filename, index=False)
+    # print(f'第二组结果已保存到文件: {filename}')
+
+
+if __name__ == "__main__":
+    plot2_timeseries_comparison()
