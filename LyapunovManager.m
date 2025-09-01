@@ -17,49 +17,59 @@ classdef LyapunovManager < handle
             end
         end
         
-        function updateQueue(obj, taskType, bk, droppedCount, newArrivals)
-            % 更新李雅普诺夫队列
-            % Qk(t+1) = max{Qk(t) - bk(t) - 丢弃的任务数量, 0} + ak(t)
-            queue = obj.Queues(taskType);
+        % TODO：需要修正下面这个函数，以及相关接口参数：Qk(t+1) = max{Qk(t) - bk(t) - 当前类型丢弃的任务数量*wkr, 0} + ak(t)*wkr
+        function updateQueue(obj, taskType, bk, droppedCount, ak, taskManager)
+            % 更新队列
+            % bk: 本时隙完成的任务数
+            % droppedCount: 本时隙丢弃的任务数
+            % ak: 本时隙新到达的任务数
             
-            % 保存前一时隙的队列长度
-            queue.PreviousLength = queue.QueueLength;
-            
-            newLength = max(queue.QueueLength - bk - droppedCount, 0) + newArrivals;
+            if obj.Queues.isKey(taskType) && taskManager.TaskTypes.isKey(taskType)
+                q = obj.Queues(taskType);
+                tt = taskManager.TaskTypes(taskType);
+                
+                % 使用一个代表性的mkr（平均值）来计算wkr
+                avg_mkr = (constants.MIN_MKR + constants.MAX_MKR) / 2;
+                wkr = TaskManager.calculateWKR(avg_mkr, tt.Ck);
 
-            queue.QueueLength = newLength;
+                % 根据TODO修正公式
+                % Qk(t+1) = max{Qk(t) - bk(t) - droppedCount*wkr, 0} + ak*wkr
+                newLength = max(q.QueueLength - bk - droppedCount * wkr, 0) + ak * wkr;
+                
+                q.QueueLength = newLength;
+            end
         end
         
-        function queueLength = getQueueLength(obj, taskType)
+        function length = getQueueLength(obj, taskType)
             % 获取指定任务类型的队列长度
             if obj.Queues.isKey(taskType)
-                queue = obj.Queues(taskType);
-                queueLength = queue.QueueLength;
+                q = obj.Queues(taskType);
+                length = q.QueueLength;
             else
-                queueLength = 0;
+                length = 0;
             end
         end
         
         function lengths = getAllQueueLengths(obj)
-            % 获取所有队列长度
-            lengths = containers.Map('KeyType', 'int32', 'ValueType', 'double');
+            % 获取所有队列的长度
+            K = constants.K();
+            lengths = zeros(1, K);
             keys = cell2mat(obj.Queues.keys);
             for i = 1:length(keys)
-                taskType = keys(i);
-                queue = obj.Queues(taskType);
-                lengths(taskType) = queue.QueueLength;
+                q = obj.Queues(keys(i));
+                lengths(keys(i)) = q.QueueLength;
             end
         end
-        
-        function drift = calculateLyapunovDrift(obj)
+
+        function drift = calculateDrift(obj)
             % 计算李雅普诺夫漂移
-            % L(t) = 1/2 * sum(Qk(t)^2)
             drift = 0;
             keys = cell2mat(obj.Queues.keys);
             for i = 1:length(keys)
-                queue = obj.Queues(keys(i));
-                drift = drift + 0.5 * (queue.QueueLength^2);
+                q = obj.Queues(keys(i));
+                drift = drift + 0.5 * (q.QueueLength^2);
             end
         end
+
     end
 end

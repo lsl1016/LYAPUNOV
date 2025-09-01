@@ -142,9 +142,10 @@ classdef MEC < handle
             success = true;
         end
         
-        function completedTaskTypes = updateNodes(obj)
+        function completedTaskTypesMap = updateNodes(obj)
             % 更新所有虚拟节点状态（每个时隙调用）
-            completedTaskTypes = [];
+            % 返回一个map, key=taskType, value=count (这里count总是1)
+            completedTaskTypesMap = containers.Map('KeyType', 'int32', 'ValueType', 'int32');
             
             for i = 1:length(obj.VirtualNodes)
                 node = obj.VirtualNodes{i};
@@ -152,7 +153,13 @@ classdef MEC < handle
                     node.RemainingSlots = node.RemainingSlots - 1;
                     if node.RemainingSlots <= 0
                         % 任务计算完成
-                        completedTaskTypes(end+1) = node.CurrentTaskType;
+                        taskType = node.CurrentTaskType;
+                        if completedTaskTypesMap.isKey(taskType)
+                            completedTaskTypesMap(taskType) = completedTaskTypesMap(taskType) + 1;
+                        else
+                            completedTaskTypesMap(taskType) = 1;
+                        end
+
                         node.IsIdle = true;
                         node.CurrentTaskType = -1;
                         node.RemainingSlots = 0;
@@ -176,49 +183,63 @@ classdef MEC < handle
             obj.CurrentTimeSlot = timeSlot;
         end
         
-        function updateRevenue(obj, taskManager)
-            % 更新收益计算
-            % 收入 = 缓存命中收益 + 计算收益
-            % 成本 = 能耗成本 + 缓存存储成本
-            
-            % 计算缓存命中收益
-            cacheHitRevenue = 0;
-            keys = cell2mat(obj.Cache.keys);
-            for i = 1:length(keys)
-                entry = obj.Cache(keys(i));
-                if taskManager.TaskTypes.isKey(keys(i))
-                    tt = taskManager.TaskTypes(keys(i));
-                    cacheHitRevenue = cacheHitRevenue + entry.HitCount * constants.WHIT * tt.Priority;
+        % TODO:修正： 当前时隙的计算收益计算方式为（在仿真函数的% 4. 调度积压队列中的任务 后计算 ）：调度的任务的任务类型的计算优先级*wcom -  constants.AFIE * (frequencyGHz^3) * constants.NMT * 计算这个任务占用的时隙数量 （需要注意的是如果这个任务在虚拟节点上需要多个时隙才能计算完成，不要重复计算）
+        % 有一种情况需要累加：那就是在未来某个时隙，在虚拟节点上计算完成获得结果，清空积压队列这个类型的任务数据时：加上 ：调度的任务的任务类型的计算优先级*wcom*这一时隙的积压队列中这个类型的任务数量
+
+        % TODO 修正：当前时隙的缓存命中收益为，对于当前时隙，如果缓存命中，则缓存命中收益为 计算任务的计算优先级*whit*当前时隙该类型任务的命中个数 -  constants.BETA * 当前时隙该类型任务的元数据大小（这个元数据大小，当前时隙同一类型任务应该只计算一次）（不要重复计算之前时隙的缓存收益了，它们应该是在之前时隙被计算过了）
+        function updateRevenue(obj, taskManager, scheduledTasks, completedTasks, cacheHitTasks)
+            % scheduledTasks: map[taskType] -> {node, mkr, ck, backlogCount}
+            % completedTasks: map[taskType] -> backlogCount
+            % cacheHitTasks: map[taskType] -> {backlogCount, metaK}
+
+            currentIncome = 0;
+            currentCost = 0;
+
+            % --- 1. 计算任务完成的收益 ---
+            % 对应TODO的第二部分：在未来某个时隙...计算完成获得结果...加上...
+            completedTaskTypes = cell2mat(keys(completedTasks));
+            for i = 1:length(completedTaskTypes)
+                taskType = completedTaskTypes(i);
+                backlogCount = completedTasks(taskType);
+                if taskManager.TaskTypes.isKey(taskType)
+                    tt = taskManager.TaskTypes(taskType);
+                    currentIncome = currentIncome + constants.WCOM * tt.Priority * backlogCount;
+                end
+            end
+
+            % --- 2. 计算缓存命中的收益和成本 ---
+            % 对应TODO: 缓存命中收益为...优先级*whit*命中个数 - BETA*元数据大小
+            cacheHitTaskTypes = cell2mat(keys(cacheHitTasks));
+            for i = 1:length(cacheHitTaskTypes)
+                taskType = cacheHitTaskTypes(i);
+                hitInfo = cacheHitTasks(taskType);
+                if taskManager.TaskTypes.isKey(taskType)
+                    tt = taskManager.TaskTypes(taskType);
+                    % 收益部分
+                    currentIncome = currentIncome + constants.WHIT * tt.Priority * hitInfo.backlogCount;
+                    % 成本部分 (每个命中的任务类型只计算一次元数据成本)
+                    currentCost = currentCost + constants.BETA * tt.MetaK;
                 end
             end
             
-            % 计算计算收益
-            computeRevenue = 0;
-            for i = 1:length(obj.VirtualNodes)
-                node = obj.VirtualNodes{i};
-                if ~node.IsIdle
-                    if taskManager.TaskTypes.isKey(node.CurrentTaskType)
-                        tt = taskManager.TaskTypes(node.CurrentTaskType);
-                        computeRevenue = computeRevenue + constants.WCOM * tt.Priority;
-                    end
-                end
+            % --- 3. 计算新调度任务的成本 (主要是能耗) ---
+            % 对应TODO: ...成本为... AFIE * (frequencyGHz^3) * NMT * 时隙数量
+            scheduledTaskTypes = cell2mat(keys(scheduledTasks));
+            for i = 1:length(scheduledTaskTypes)
+                taskType = scheduledTaskTypes(i);
+                taskInfo = scheduledTasks(taskType);
+                node = taskInfo.node;
+                
+                frequencyGHz = node.ComputeFrequency / 1000.0;
+                requiredSlots = TaskManager.calculateWKR(taskInfo.mkr, taskInfo.ck);
+                
+                % 注意: 此处不计算WCOM相关的收益，因为那部分在任务完成时才获得
+                currentCost = currentCost + constants.AFIE * (frequencyGHz^3) * constants.NMT * requiredSlots;
             end
             
-            % 计算能耗成本
-            energyCost = 0;
-            for i = 1:length(obj.VirtualNodes)
-                node = obj.VirtualNodes{i};
-                if ~node.IsIdle
-                    frequencyGHz = node.ComputeFrequency / 1000.0;
-                    energyCost = energyCost + constants.AFIE * (frequencyGHz^3) * constants.NMT * constants.Tslot;
-                end
-            end
-            
-            % 计算缓存存储成本
-            cacheCost = obj.UsedCacheSize * constants.BETA;
-            
-            obj.Income = cacheHitRevenue + computeRevenue;
-            obj.Cost = energyCost + cacheCost;
+            % --- 4. 累加总收益和成本 ---
+            obj.Income = obj.Income + currentIncome;
+            obj.Cost = obj.Cost + currentCost;
             obj.Revenue = obj.Income - obj.Cost;
         end
         

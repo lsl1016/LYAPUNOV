@@ -3,25 +3,25 @@ classdef constants < handle
     
     properties (Constant)
         % 虚拟节点相关常量
-        V = 5;      % 虚拟节点数量
-        FMIN = 2000; % 最小计算频率 (MHz)
-        FMAX = 4000; % 最大计算频率 (MHz)
-        FM = 1000;   % 基准计算频率 (MHz)
+        V = 10;      % 虚拟节点数量
+        FMIN = 500; % 最小计算频率 (MHz)
+        FMAX = 2000; % 最大计算频率 (MHz)
+        FM = 500;   % 基准计算频率 (MHz)
         
         % 任务相关常量（调整后增加系统压力和复杂度）
         Tslot = 1; % 时隙长度 (秒)
         
         % 任务生成随机范围
         MIN_MKR = 4;       % 最小输入数据量 (Mbit)
-        MAX_MKR = 20;       % 最大输入数据量 (Mbit)
+        MAX_MKR = 10;       % 最大输入数据量 (Mbit)
 
-        MIN_SKR = 6;        % 最小时延预警值 (秒) - 更紧迫的截止时间
+        MIN_SKR = 6;        % 最小时延预警值 (秒) 
         MAX_SKR = 10;       % 最大时延预警值 (秒)
 
-        MIN_CK = 500;       % 最小计算复杂度（提高计算需求）
-        MAX_CK = 1500;      % 最大计算复杂度
+        MIN_CK = 1000;       % 最小计算复杂度（提高计算需求）
+        MAX_CK = 2000;      % 最大计算复杂度
 
-        MIN_METAK = 60;    % 最小元数据量 (Mbit)（增加缓存价值）
+        MIN_METAK = 60;    % 最小元数据量 (Mbit)
         MAX_METAK = 100;    % 最大元数据量 (Mbit)
 
         MIN_PRIORITY = 1;   % 最小优先级
@@ -52,9 +52,9 @@ classdef constants < handle
     
     properties (Constant, Access = private)
         % 可变的全局参数（用于实验配置）
-        TOTAL_CACHE_SIZE_DEFAULT = 1500.0; % 总缓存大小 (Mbit)
+        TOTAL_CACHE_SIZE_DEFAULT = 1000;    % 总缓存大小 (Mbit)
         K_DEFAULT = 40;                     % 任务类型总数
-        N_DEFAULT = 25;                     % 每个时隙产生的任务数量（默认25）
+        N_DEFAULT = 40;                     % 每个时隙产生的任务数量
     end
     
     methods (Static)

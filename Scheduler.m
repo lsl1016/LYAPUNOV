@@ -17,131 +17,183 @@ classdef Scheduler < handle
         end
         
         function results = scheduleTasks(obj, mec, taskManager, lyapunovManager)
-            % 根据调度算法调度任务
+            % 根据指定的算法调用相应的调度函数
             switch obj.Algorithm
                 case constants.GreedySchedule
                     results = obj.greedySchedule(mec, taskManager);
                 case constants.ShortTermSchedule
-                    results = obj.shortTermSchedule(mec, taskManager);
+                    results = obj.shortTermSchedule(mec, taskManager, lyapunovManager);
                 case constants.LyapunovSchedule
                     results = obj.lyapunovSchedule(mec, taskManager, lyapunovManager);
                 case constants.NoCacheSchedule
-                    results = obj.noCacheSchedule(mec, taskManager, lyapunovManager);
+                    % 无缓存调度可以复用李雅普诺夫调度，但在Simulator层面需禁用缓存
+                    results = obj.lyapunovSchedule(mec, taskManager, lyapunovManager);
                 otherwise
-                    results = obj.greedySchedule(mec, taskManager);
+                    results = {};
             end
         end
 
-        % TODO: 调整参数，修正算法
+        % TODO: 修正算法
 
         function results = greedySchedule(obj, mec, taskManager)
-            % 贪心调度策略（原有简单策略）
             results = {};
+            
+            % 获取所有积压任务和空闲节点
+            backlogTasks = taskManager.getAllBacklogTasks(); % TaskValue2 objects
             idleNodes = mec.getIdleNodes();
             
-            if isempty(idleNodes)
+            % 如果没有任务或没有空闲节点，直接返回
+            if isempty(backlogTasks) || isempty(idleNodes)
                 return;
             end
             
-            % 获取积压队列中的任务类型
-            candidateTasks = obj.getCandidateTasks(mec, taskManager);
-            if isempty(candidateTasks)
-                return;
-            end
+            % 按任务优先级降序排序
+            [~, sortedTaskIndices] = sort(cellfun(@(x) x.Priority, backlogTasks), 'descend');
             
-            % 按价值排序
-            sortedTasks = obj.sortTasksByValue(candidateTasks);
+            % 按节点计算频率降序排序
+            [~, sortedNodeIndices] = sort(cellfun(@(x) x.ComputeFrequency, idleNodes), 'descend');
             
-            % 贪心分配
-            nodeIndex = 1;
-            for i = 1:min(length(sortedTasks), length(idleNodes))
-                task = sortedTasks{i};
-                node = idleNodes{nodeIndex};
+            numToSchedule = min(length(backlogTasks), length(idleNodes));
+            scheduledTaskTypes = containers.Map('KeyType', 'int32', 'ValueType', 'logical');
+
+            for i = 1:numToSchedule
+                taskInfo = backlogTasks{sortedTaskIndices(i)};
+                node = idleNodes{sortedNodeIndices(i)};
                 
-                % 计算fkr
-                taskTypeInfo = taskManager.TaskTypes(task.TaskType);
+                % 跳过已调度过的任务类型
+                if isKey(scheduledTaskTypes, taskInfo.TaskType)
+                    continue;
+                end
+
+                % 从积压队列中获取一个真实的任务实例以检查其属性
+                realTask = taskManager.peekTaskFromBacklog(taskInfo.TaskType);
+                if isempty(realTask)
+                    continue; % 如果队列为空，则跳过
+                end
                 
-                % 生成随机的mkr值（因为TaskValue2中没有存储）
-                mkr = randi([constants.MIN_MKR, constants.MAX_MKR]);
-                if mec.scheduleTask(task.TaskType, node.ID, mkr, taskTypeInfo.Ck)
-                    backlogCount = taskManager.getBacklogCount(task.TaskType);
-                    results{end+1} = SchedulingResult(task.TaskType, node.ID, 0, backlogCount);
-                    nodeIndex = nodeIndex + 1;
+                % 检查时延约束
+                requiredSlots = TaskManager.calculateWKR(realTask.MKR, realTask.Ck);
+                if requiredSlots > (realTask.SKR - realTask.Age)
+                    continue; % 如果不满足时延约束，则不调度
+                end
+
+                % 调度任务
+                if mec.scheduleTask(taskInfo.TaskType, node.ID, realTask.MKR, realTask.Ck)
+                    res = SchedulingResult();
+                    res.TaskType = taskInfo.TaskType;
+                    res.NodeID = node.ID;
+                    res.MKR = realTask.MKR;
+                    res.CompletedTasks = 1; % 贪心调度一次只处理一个任务
+                    results{end+1} = res;
+                    
+                    scheduledTaskTypes(taskInfo.TaskType) = true;
                 end
             end
         end
         
         function results = lyapunovSchedule(obj, mec, taskManager, lyapunovManager)
-            % 李雅普诺夫调度算法（调度算法3，KM匹配）
             results = {};
-            idleNodes = mec.getIdleNodes();
-            
-            if isempty(idleNodes)
-                return;
-            end
-            
-            % 获取积压队列中的任务类型（过滤掉缓存命中和正在计算的）
+
             candidateTasks = obj.getCandidateTasks(mec, taskManager);
-            if isempty(candidateTasks)
+            idleNodes = mec.getIdleNodes();
+
+            if isempty(candidateTasks) || isempty(idleNodes)
                 return;
             end
+
+            numTasks = length(candidateTasks);
+            numNodes = length(idleNodes);
             
-            % 按价值（访问频率*优先级）排序，选择前K个任务类型
-            sortedTasks = obj.sortTasksByValue(candidateTasks);
-            maxTasks = length(idleNodes);
-            if length(sortedTasks) > maxTasks
-                sortedTasks = sortedTasks(1:maxTasks);
-            end
-            
-            % 计算权重矩阵：根据李雅普诺夫优化理论
-            % 目标：最大化 VV*(收益-成本) - Q*bkr
-            % 但由于使用最小权重匹配，需要对权重取负值
-            weights = zeros(length(sortedTasks), length(idleNodes));
-            for i = 1:length(sortedTasks)
-                task = sortedTasks{i};
-                queueLength = lyapunovManager.getQueueLength(task.TaskType);
+            weightMatrix = zeros(numTasks, numNodes);
+            taskDetails = cell(numTasks, 1);
+
+            for i = 1:numTasks
+                taskInfo = candidateTasks{i};
+
+                % -- 开始执行严格的TODO逻辑 --
+                all_tasks_of_type = taskManager.getBacklogTasks(taskInfo.TaskType);
+                best_task_for_type = [];
+                min_required_freq = inf;
+
+                for k = 1:length(all_tasks_of_type)
+                    currentTask = all_tasks_of_type{k};
+                    deadline_slots = currentTask.SKR - currentTask.Age;
+                    if deadline_slots <= 0
+                        continue;
+                    end
+                    required_freq = (currentTask.Ck * currentTask.MKR) / (deadline_slots * constants.Tslot) / 1e6;
+                    
+                    if required_freq < min_required_freq
+                        min_required_freq = required_freq;
+                        best_task_for_type = currentTask;
+                    end
+                end
+                % -- 严格TODO逻辑结束 --
+
+                if isempty(best_task_for_type)
+                    taskDetails{i} = [];
+                    continue; 
+                end
+                taskDetails{i} = best_task_for_type;
                 
-                for j = 1:length(idleNodes)
+                queueLength = lyapunovManager.getQueueLength(taskInfo.TaskType);
+                
+                for j = 1:numNodes
                     node = idleNodes{j};
-                    % 计算bkr(t) - 使用taskTypeInfo获取正确的值
-                    taskTypeInfo = taskManager.TaskTypes(task.TaskType);
-                    mkr_temp = randi([constants.MIN_MKR, constants.MAX_MKR]); % 临时生成mkr值
-                    bkr = TaskManager.calculateBKR(mkr_temp, taskTypeInfo.Ck, node.ComputeFrequency, false);
                     
-                    % 计算能耗成本
+                    if node.ComputeFrequency < min_required_freq
+                        weightMatrix(i, j) = inf;
+                        continue;
+                    end
+                    
+                    requiredSlots = TaskManager.calculateWKR(best_task_for_type.MKR, best_task_for_type.Ck);
                     frequencyGHz = node.ComputeFrequency / 1000.0;
-                    energyCost = constants.AFIE * (frequencyGHz^3) * constants.NMT * constants.Tslot;
+                    energyCost = constants.AFIE * (frequencyGHz^3) * constants.NMT * requiredSlots;
+                    serviceRate = 1 / requiredSlots;
                     
-                    % 李雅普诺夫优化权重计算：
-                    % 目标函数：最大化 V*(收益-成本) - Q*服务增益
-                    % 收益 = WCOM * 优先级，成本 = 能耗成本
-                    immediateBenefit = constants.WCOM * task.Priority - energyCost;
-                    stabilityTerm = queueLength * bkr;
+                    revenue = constants.WCOM * taskInfo.Priority - energyCost;
                     
-                    % 最终目标：最大化 V*immediateBenefit - stabilityTerm
-                    % 但因为使用最小权重匹配，所以权重 = -(V*immediateBenefit - stabilityTerm)
-                    weights(i, j) = -(obj.LyapunovVV * immediateBenefit - stabilityTerm);
+                    weightMatrix(i, j) = queueLength * serviceRate - obj.LyapunovVV * revenue;
                 end
             end
             
-            % 使用匈牙利算法求解最小权重匹配（实际上等价于最大化目标函数）
-            matching = obj.hungarianAlgorithm(weights);
+            for i = 1:numTasks
+                if isempty(taskDetails{i})
+                    weightMatrix(i,:) = inf;
+                end
+            end
+
+            [~, sorted_indices] = sort(weightMatrix(:), 'ascend');
             
-            % 执行匹配结果
-            for i = 1:length(matching)
-                nodeIndex = matching(i);
-                if i <= length(sortedTasks) && nodeIndex ~= -1 && nodeIndex <= length(idleNodes)
-                    task = sortedTasks{i};
-                    node = idleNodes{nodeIndex};
-                    taskTypeInfo = taskManager.TaskTypes(task.TaskType);
-                    mkr = randi([constants.MIN_MKR, constants.MAX_MKR]);
-                    
-                    if mec.scheduleTask(task.TaskType, node.ID, mkr, taskTypeInfo.Ck)
-                        % 获取该类型的积压任务数量
-                        backlogCount = taskManager.getBacklogCount(task.TaskType);
+            assigned_tasks = false(1, numTasks);
+            assigned_nodes = false(1, numNodes);
+            
+            numToSchedule = min(numTasks, numNodes);
+            countScheduled = 0;
+            
+            for k = 1:length(sorted_indices)
+                if countScheduled >= numToSchedule
+                    break;
+                end
+                
+                [i, j] = ind2sub(size(weightMatrix), sorted_indices(k));
+                
+                if ~assigned_tasks(i) && ~assigned_nodes(j) && weightMatrix(i,j) < inf
+                    taskInfo = candidateTasks{i};
+                    node = idleNodes{j};
+                    realTask = taskDetails{i};
+
+                    if mec.scheduleTask(taskInfo.TaskType, node.ID, realTask.MKR, realTask.Ck)
+                        res = SchedulingResult();
+                        res.TaskType = taskInfo.TaskType;
+                        res.NodeID = node.ID;
+                        res.MKR = realTask.MKR;
+                        res.CompletedTasks = 1;
+                        results{end+1} = res;
                         
-                        results{end+1} = SchedulingResult(task.TaskType, node.ID, weights(i, nodeIndex), backlogCount);
-                        % 注意：不再在这里清空积压队列，由模拟器统一管理
+                        assigned_tasks(i) = true;
+                        assigned_nodes(j) = true;
+                        countScheduled = countScheduled + 1;
                     end
                 end
             end
@@ -244,9 +296,109 @@ classdef Scheduler < handle
                 end
             end
         end
-        
-        function results = shortTermSchedule(obj, mec, taskManager)
-            results = obj.greedySchedule(mec, taskManager);
+        % TODO：下面这个也是KM匹配，但是不考虑李雅普诺夫队列
+        function results = shortTermSchedule(obj, mec, taskManager, lyapunovManager)
+            results = {};
+            
+            candidateTasks = obj.getCandidateTasks(mec, taskManager);
+            idleNodes = mec.getIdleNodes();
+            
+            if isempty(candidateTasks) || isempty(idleNodes)
+                return;
+            end
+            
+            numTasks = length(candidateTasks);
+            numNodes = length(idleNodes);
+            
+            weightMatrix = zeros(numTasks, numNodes);
+            taskDetails = cell(numTasks, 1);
+
+            for i = 1:numTasks
+                taskInfo = candidateTasks{i};
+                
+                % -- 开始执行严格的TODO逻辑 --
+                all_tasks_of_type = taskManager.getBacklogTasks(taskInfo.TaskType);
+                best_task_for_type = [];
+                min_required_freq = inf;
+
+                for k = 1:length(all_tasks_of_type)
+                    currentTask = all_tasks_of_type{k};
+                    deadline_slots = currentTask.SKR - currentTask.Age;
+                    if deadline_slots <= 0
+                        continue;
+                    end
+                    required_freq = (currentTask.Ck * currentTask.MKR) / (deadline_slots * constants.Tslot) / 1e6;
+                    
+                    if required_freq < min_required_freq
+                        min_required_freq = required_freq;
+                        best_task_for_type = currentTask;
+                    end
+                end
+                % -- 严格TODO逻辑结束 --
+
+                if isempty(best_task_for_type)
+                    taskDetails{i} = [];
+                    continue;
+                end
+                taskDetails{i} = best_task_for_type;
+
+                for j = 1:numNodes
+                    node = idleNodes{j};
+                    
+                    % 检查节点是否满足最低频率要求
+                    if node.ComputeFrequency < min_required_freq
+                        weightMatrix(i, j) = -inf;
+                        continue;
+                    end
+                    
+                    requiredSlots = TaskManager.calculateWKR(best_task_for_type.MKR, best_task_for_type.Ck);
+                    frequencyGHz = node.ComputeFrequency / 1000.0;
+                    energyCost = constants.AFIE * (frequencyGHz^3) * constants.NMT * requiredSlots;
+                    
+                    weightMatrix(i, j) = constants.WCOM * taskInfo.Priority - energyCost;
+                end
+            end
+            
+            for i = 1:numTasks
+                if isempty(taskDetails{i})
+                    weightMatrix(i,:) = -inf;
+                end
+            end
+            
+            [~, sorted_indices] = sort(weightMatrix(:), 'descend');
+            
+            assigned_tasks = false(1, numTasks);
+            assigned_nodes = false(1, numNodes);
+            
+            numToSchedule = min(numTasks, numNodes);
+            countScheduled = 0;
+            
+            for k = 1:length(sorted_indices)
+                if countScheduled >= numToSchedule
+                    break;
+                end
+                
+                [i, j] = ind2sub(size(weightMatrix), sorted_indices(k));
+                
+                if ~assigned_tasks(i) && ~assigned_nodes(j) && weightMatrix(i,j) > -inf
+                    taskInfo = candidateTasks{i};
+                    node = idleNodes{j};
+                    realTask = taskDetails{i};
+
+                    if mec.scheduleTask(taskInfo.TaskType, node.ID, realTask.MKR, realTask.Ck)
+                        res = SchedulingResult();
+                        res.TaskType = taskInfo.TaskType;
+                        res.NodeID = node.ID;
+                        res.MKR = realTask.MKR;
+                        res.CompletedTasks = 1;
+                        results{end+1} = res;
+                        
+                        assigned_tasks(i) = true;
+                        assigned_nodes(j) = true;
+                        countScheduled = countScheduled + 1;
+                    end
+                end
+            end
         end
         
         function results = noCacheSchedule(obj, mec, taskManager, lyapunovManager)

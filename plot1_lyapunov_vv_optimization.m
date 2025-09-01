@@ -93,11 +93,11 @@ fprintf('最优收益: %.4f\n', max_revenue);
 fprintf('收益提升: %.2f%%\n', (max_revenue - min(average_revenues)) / min(average_revenues) * 100);
 
 % 保存结果数据
-results_table = table(vv_range', average_revenues', ...
-    'VariableNames', {'VV_Parameter', 'Average_Revenue'});
+% results_table = table(vv_range', average_revenues', ...
+%    'VariableNames', {'VV_Parameter', 'Average_Revenue'});
 
 % 保存到CSV文件
-filename = sprintf('vv_optimization_results_%s.csv', datestr(now, 'yyyymmdd_HHMMSS'));
+% filename = sprintf('vv_optimization_results_%s.csv', datestr(now, 'yyyymmdd_HHMMSS'));
 % writetable(results_table, filename);
 % fprintf('结果已保存到文件: %s\n', filename);
 

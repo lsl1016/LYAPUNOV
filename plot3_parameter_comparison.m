@@ -8,7 +8,6 @@ function plot3_parameter_comparison()
 clc;close all;clear;
 
 fprintf('=== 开始参数对比实验 ===\n');
-
 % 第一组实验：不同任务类型数量K的对比
 fprintf('\n--- 第一组：不同任务类型数量K的对比 ---\n');
 plot_different_k_comparison();
@@ -54,6 +53,7 @@ num_algorithms = length(scheduling_algorithms);
 % 存储结果
 results_revenue = zeros(num_algorithms, num_k);
 results_backlog = zeros(num_algorithms, num_k);
+results_droprate = zeros(num_algorithms, num_k);  
 
 % 运行仿真实验
 for k_idx = 1:num_k
@@ -94,9 +94,14 @@ for k_idx = 1:num_k
         stats = sim.getStatistics();
         results_revenue(alg_idx, k_idx) = stats.AverageRevenue;
         results_backlog(alg_idx, k_idx) = stats.AverageBacklogQueueLength;
+        if stats.TotalTasksGenerated > 0
+            results_droprate(alg_idx, k_idx) = stats.TotalTasksDropped / stats.TotalTasksGenerated * 100;
+        else
+            results_droprate(alg_idx, k_idx) = 0;
+        end
         
-        fprintf('    完成，平均收益: %.4f, 平均积压长度: %.2f\n', ...
-                results_revenue(alg_idx, k_idx), results_backlog(alg_idx, k_idx));
+        fprintf('    完成，平均收益: %.4f, 平均积压长度: %.2f, 丢弃率: %.2f%%\n', ...
+                results_revenue(alg_idx, k_idx), results_backlog(alg_idx, k_idx), results_droprate(alg_idx, k_idx));
     end
 end
 
@@ -122,6 +127,17 @@ bar(k_values, bar_data_backlog);
 xlabel('任务类型数量 K');
 ylabel('任务积压队列的平均长度');
 title(sprintf('不同任务类型数量K下的任务积压队列平均长度对比 (N=%d, 缓存=%dMbit)', fixed_n, constants.totalCacheSize()));
+legend(algorithm_names, 'Location', 'best');
+grid on;
+
+% 新增：绘制第三个图 - 任务丢弃率
+figure;
+bar_data_droprate = results_droprate';
+bar(k_values, bar_data_droprate);
+
+xlabel('任务类型数量 K');
+ylabel('任务丢弃率 (%)');
+title(sprintf('不同任务类型数量K下的任务丢弃率对比 (N=%d, 缓存=%dMbit)', fixed_n, constants.totalCacheSize()));
 legend(algorithm_names, 'Location', 'best');
 grid on;
 
@@ -177,6 +193,7 @@ num_algorithms = length(scheduling_algorithms);
 % 存储结果
 results_revenue = zeros(num_algorithms, num_n);
 results_backlog = zeros(num_algorithms, num_n);
+results_droprate = zeros(num_algorithms, num_n); % 新增：存储任务丢弃率
 
 % 运行仿真实验
 for n_idx = 1:num_n
@@ -217,9 +234,14 @@ for n_idx = 1:num_n
         stats = sim.getStatistics();
         results_revenue(alg_idx, n_idx) = stats.AverageRevenue;
         results_backlog(alg_idx, n_idx) = stats.AverageBacklogQueueLength;
+        if stats.TotalTasksGenerated > 0
+            results_droprate(alg_idx, n_idx) = stats.TotalTasksDropped / stats.TotalTasksGenerated * 100;
+        else
+            results_droprate(alg_idx, n_idx) = 0;
+        end
         
-        fprintf('    完成，平均收益: %.4f, 平均积压长度: %.2f\n', ...
-                results_revenue(alg_idx, n_idx), results_backlog(alg_idx, n_idx));
+        fprintf('    完成，平均收益: %.4f, 平均积压长度: %.2f, 丢弃率: %.2f%%\n', ...
+                results_revenue(alg_idx, n_idx), results_backlog(alg_idx, n_idx), results_droprate(alg_idx, n_idx));
     end
 end
 
@@ -245,6 +267,17 @@ bar(n_values, bar_data_backlog);
 xlabel('每时隙生成任务数量 N');
 ylabel('任务积压队列的平均长度');
 title(sprintf('不同任务生成数量N下的任务积压队列平均长度对比 (K=%d, 缓存=%dMbit)', fixed_k, constants.totalCacheSize()));
+legend(algorithm_names, 'Location', 'best');
+grid on;
+
+% 新增：绘制第三个图 - 任务丢弃率
+figure;
+bar_data_droprate = results_droprate';
+bar(n_values, bar_data_droprate);
+
+xlabel('每时隙生成任务数量 N');
+ylabel('任务丢弃率 (%)');
+title(sprintf('不同任务生成数量N下的任务丢弃率对比 (K=%d, 缓存=%dMbit)', fixed_k, constants.totalCacheSize()));
 legend(algorithm_names, 'Location', 'best');
 grid on;
 

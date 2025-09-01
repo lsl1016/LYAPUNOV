@@ -48,43 +48,60 @@ classdef TaskManager < handle
             mkr = randi([constants.MIN_MKR, constants.MAX_MKR]);  % 输入数据量
             skr = randi([constants.MIN_SKR, constants.MAX_SKR]);  % 时延预警值
 
-            task = Task(obj.nextTaskID, taskType, tt.Priority, skr, mkr, tt.Ck, tt.MetaK, currentTimeSlot);
+            task = task(obj.nextTaskID, taskType, tt.Priority, skr, mkr, tt.Ck, tt.MetaK, currentTimeSlot);
             obj.nextTaskID = obj.nextTaskID + 1;
         end
 
-        function tasks = generateRandomTasks(obj, currentTimeSlot)
-            % 随机生成N个任务
+        % TODO：我希望从长期看每个时隙生成的任务类型的数量比例是每个任务类型的概率
+        function tasks = generateRandomTasks(obj, currentTime)
+            % 按概率生成每时隙的任务
             tasks = {};
-            N = constants.N;
-
-            for i = 1:N
-                % 根据概率随机选择任务类型
-                taskType = obj.selectTaskTypeByProbability();
-                if taskType ~= -1
-                    task = obj.generateTask(taskType, currentTimeSlot);
-                    tasks{end+1} = task;
-                end
-            end
-        end
-
-        function taskType = selectTaskTypeByProbability(obj)
-            % 根据概率选择任务类型
-            r = rand();
-            cumulative = 0.0;
-
-            keys = cell2mat(obj.TaskTypes.keys);
-            for i = 1:length(keys)
-                tt = obj.TaskTypes(keys(i));
-                cumulative = cumulative + tt.PK;
-                if r <= cumulative
-                    taskType = keys(i);
-                    return;
-                end
-            end
-
-            % 如果没有选中，随机返回一个类型
+            numTasksToGenerate = constants.N();
             K = constants.K();
-            taskType = randi([1, K]);
+            
+            % 准备轮盘赌选择
+            % 确保概率是按任务类型ID (1 to K) 顺序排列
+            probabilities = zeros(1, K);
+            for i = 1:K
+                if obj.TaskTypes.isKey(i)
+                    tt = obj.TaskTypes(i);
+                    probabilities(i) = tt.PK;
+                end
+            end
+            
+            % 创建累积分布函数(CDF)
+            cdf = cumsum(probabilities);
+            
+            for i = 1:numTasksToGenerate
+                % 生成一个 (0, 1] 之间的随机数
+                randVal = rand();
+                
+                % 轮盘赌选择, find返回的索引就是任务类型的ID
+                taskTypeID = find(randVal <= cdf, 1, 'first');
+                
+                if ~isempty(taskTypeID) && obj.TaskTypes.isKey(taskTypeID)
+                    selectedTaskType = obj.TaskTypes(taskTypeID); % 这是TaskType对象
+                    
+                    % 随机生成mkr和skr
+                    mkr = randi([constants.MIN_MKR, constants.MAX_MKR]);
+                    skr = randi([constants.MIN_SKR, constants.MAX_SKR]);
+                    
+                    % 创建任务实例
+                    task = task( ...
+                        obj.nextTaskID, ...
+                        taskTypeID, ... % <<< 修正：直接使用taskTypeID
+                        selectedTaskType.Priority, ...
+                        skr, ...
+                        mkr, ...
+                        selectedTaskType.Ck, ...
+                        selectedTaskType.MetaK, ...
+                        currentTime ...
+                        );
+                    
+                    tasks{end+1} = task;
+                    obj.nextTaskID = obj.nextTaskID + 1;
+                end
+            end
         end
 
         function addToBacklog(obj, task)
@@ -146,6 +163,40 @@ classdef TaskManager < handle
                 end
             end
         end
+
+        function tasks = getBacklogTasks(obj, taskType)
+            % 获取指定类型积压队列中的所有任务
+            tasks = {};
+            if obj.BacklogQueue.isKey(taskType)
+                tasks = obj.BacklogQueue(taskType);
+            end
+        end
+        
+        function task = peekTaskFromBacklog(obj, taskType)
+            % 查看但不移除指定类型积压队列中的第一个任务
+            task = [];
+            if obj.BacklogQueue.isKey(taskType)
+                queue = obj.BacklogQueue(taskType);
+                if ~isempty(queue)
+                    task = queue{1};
+                end
+            end
+        end
+        
+        function allTasks = getAllBacklogTasks(obj)
+            % 获取所有积压队列中的任务，返回TaskValue2列表
+            allTasks = {};
+            taskTypeKeys = cell2mat(obj.BacklogQueue.keys);
+            for i = 1:length(taskTypeKeys)
+                taskType = taskTypeKeys(i);
+                if ~isempty(obj.BacklogQueue(taskType))
+                    % 只需要类型和优先级用于调度决策
+                    tt = obj.TaskTypes(taskType);
+                    allTasks{end+1} = TaskValue2(taskType, tt.Priority);
+                end
+            end
+        end
+
     end
 
     methods (Static)
