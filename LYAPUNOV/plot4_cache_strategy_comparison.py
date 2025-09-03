@@ -159,79 +159,122 @@ def plot_cache_strategies_vs_k():
                   f'命中优先级: {results_hit_priority[cache_idx, k_idx]:.0f}')
     
     # 绘制第一组柱状图：MEC时间平均收益
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(8, 8))  # 设置为正方形
     x = np.arange(len(k_values))
-    width = 0.15
+    width = 0.14  # 调整柱子宽度，增加间距
+    
+    # 定义缓存算法颜色方案（参考截图样式）
+    cache_colors = ['#1f77b4', '#ff7f0e', '#ffbb78', '#9467bd', '#c5b0d5']
     
     for i in range(num_cache_algs):
-        plt.bar(x + i * width, results_revenue[i, :], width, label=cache_names[i])
+        plt.bar(x + i * width, results_revenue[i, :], width, 
+                label=cache_names[i], color=cache_colors[i])
     
     plt.xlabel('任务类型数量 K')
     plt.ylabel('MEC时间平均收益')
-    plt.title(f'不同任务类型数量K下各缓存策略的MEC时间平均收益对比 (N={fixed_n}, 李雅普诺夫调度)')
+    # 去除标题
     plt.xticks(x + width * 2, k_values)
     plt.legend(loc='best')
     plt.grid(True, alpha=0.3)
+    
+    # 设置外边框为实线
+    ax = plt.gca()
+    for spine in ax.spines.values():
+        spine.set_linewidth(1.0)
+        spine.set_linestyle('-')
+    
     plt.tight_layout()
     plt.show()
     
     # 绘制第一组柱状图：任务积压队列的平均长度
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(8, 8))  # 设置为正方形
     
     for i in range(num_cache_algs):
-        plt.bar(x + i * width, results_backlog[i, :], width, label=cache_names[i])
+        plt.bar(x + i * width, results_backlog[i, :], width, 
+                label=cache_names[i], color=cache_colors[i])
     
     plt.xlabel('任务类型数量 K')
     plt.ylabel('任务积压队列的平均长度')
-    plt.title(f'不同任务类型数量K下各缓存策略的任务积压队列平均长度对比 (N={fixed_n}, 李雅普诺夫调度)')
+    # 去除标题
     plt.xticks(x + width * 2, k_values)
     plt.legend(loc='best')
     plt.grid(True, alpha=0.3)
+    
+    # 设置外边框为实线
+    ax = plt.gca()
+    for spine in ax.spines.values():
+        spine.set_linewidth(1.0)
+        spine.set_linestyle('-')
+    
     plt.tight_layout()
     plt.show()
     
     # 绘制第一组柱状图：MEC缓存的任务类型总价值
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(8, 8))  # 设置为正方形
     
     for i in range(num_cache_algs):
-        plt.bar(x + i * width, results_cache_value[i, :], width, label=cache_names[i])
+        plt.bar(x + i * width, results_cache_value[i, :], width, 
+                label=cache_names[i], color=cache_colors[i])
     
     plt.xlabel('任务类型数量 K')
     plt.ylabel('MEC缓存的任务类型总价值')
-    plt.title(f'不同任务类型数量K下各缓存策略的缓存总价值对比 (N={fixed_n}, 李雅普诺夫调度)')
+    # 去除标题
     plt.xticks(x + width * 2, k_values)
     plt.legend(loc='best')
     plt.grid(True, alpha=0.3)
+    
+    # 设置外边框为实线
+    ax = plt.gca()
+    for spine in ax.spines.values():
+        spine.set_linewidth(1.0)
+        spine.set_linestyle('-')
+    
     plt.tight_layout()
     plt.show()
     
     # 绘制第一组柱状图：缓存命中率
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(8, 8))  # 设置为正方形
     
     for i in range(num_cache_algs):
-        plt.bar(x + i * width, results_hit_rate[i, :], width, label=cache_names[i])
+        plt.bar(x + i * width, results_hit_rate[i, :], width, 
+                label=cache_names[i], color=cache_colors[i])
     
     plt.xlabel('任务类型数量 K')
     plt.ylabel('缓存命中率 (%)')
-    plt.title(f'不同任务类型数量K下各缓存策略的缓存命中率对比 (N={fixed_n}, 李雅普诺夫调度)')
+    # 去除标题
     plt.xticks(x + width * 2, k_values)
     plt.legend(loc='best')
     plt.grid(True, alpha=0.3)
+    
+    # 设置外边框为实线
+    ax = plt.gca()
+    for spine in ax.spines.values():
+        spine.set_linewidth(1.0)
+        spine.set_linestyle('-')
+    
     plt.tight_layout()
     plt.show()
     
     # 绘制第一组柱状图：缓存命中任务总优先级
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(8, 8))  # 设置为正方形
     
     for i in range(num_cache_algs):
-        plt.bar(x + i * width, results_hit_priority[i, :], width, label=cache_names[i])
+        plt.bar(x + i * width, results_hit_priority[i, :], width, 
+                label=cache_names[i], color=cache_colors[i])
     
     plt.xlabel('任务类型数量 K')
     plt.ylabel('缓存命中任务总优先级')
-    plt.title(f'不同任务类型数量K下各缓存策略的缓存命中任务总优先级对比 (N={fixed_n}, 李雅普诺夫调度)')
+    # 去除标题
     plt.xticks(x + width * 2, k_values)
     plt.legend(loc='best')
     plt.grid(True, alpha=0.3)
+    
+    # 设置外边框为实线
+    ax = plt.gca()
+    for spine in ax.spines.values():
+        spine.set_linewidth(1.0)
+        spine.set_linestyle('-')
+    
     plt.tight_layout()
     plt.show()
     
@@ -363,79 +406,122 @@ def plot_cache_strategies_vs_n():
                   f'命中优先级: {results_hit_priority[cache_idx, n_idx]:.0f}')
     
     # 绘制第二组柱状图：MEC时间平均收益
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(8, 8))  # 设置为正方形
     x = np.arange(len(n_values))
-    width = 0.15
+    width = 0.14  # 调整柱子宽度，增加间距
+    
+    # 定义缓存算法颜色方案（与第一组保持一致）
+    cache_colors = ['#1f77b4', '#ff7f0e', '#ffbb78', '#9467bd', '#c5b0d5']
     
     for i in range(num_cache_algs):
-        plt.bar(x + i * width, results_revenue[i, :], width, label=cache_names[i])
+        plt.bar(x + i * width, results_revenue[i, :], width, 
+                label=cache_names[i], color=cache_colors[i])
     
     plt.xlabel('每时隙生成任务数量 N')
     plt.ylabel('MEC时间平均收益')
-    plt.title(f'不同任务生成数量N下各缓存策略的MEC时间平均收益对比 (K={fixed_k}, 李雅普诺夫调度)')
+    # 去除标题
     plt.xticks(x + width * 2, n_values)
     plt.legend(loc='best')
     plt.grid(True, alpha=0.3)
+    
+    # 设置外边框为实线
+    ax = plt.gca()
+    for spine in ax.spines.values():
+        spine.set_linewidth(1.0)
+        spine.set_linestyle('-')
+    
     plt.tight_layout()
     plt.show()
     
     # 绘制第二组柱状图：任务积压队列的平均长度
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(8, 8))  # 设置为正方形
     
     for i in range(num_cache_algs):
-        plt.bar(x + i * width, results_backlog[i, :], width, label=cache_names[i])
+        plt.bar(x + i * width, results_backlog[i, :], width, 
+                label=cache_names[i], color=cache_colors[i])
     
     plt.xlabel('每时隙生成任务数量 N')
     plt.ylabel('任务积压队列的平均长度')
-    plt.title(f'不同任务生成数量N下各缓存策略的任务积压队列平均长度对比 (K={fixed_k}, 李雅普诺夫调度)')
+    # 去除标题
     plt.xticks(x + width * 2, n_values)
     plt.legend(loc='best')
     plt.grid(True, alpha=0.3)
+    
+    # 设置外边框为实线
+    ax = plt.gca()
+    for spine in ax.spines.values():
+        spine.set_linewidth(1.0)
+        spine.set_linestyle('-')
+    
     plt.tight_layout()
     plt.show()
     
     # 绘制第二组柱状图：MEC缓存的任务类型总价值
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(8, 8))  # 设置为正方形
     
     for i in range(num_cache_algs):
-        plt.bar(x + i * width, results_cache_value[i, :], width, label=cache_names[i])
+        plt.bar(x + i * width, results_cache_value[i, :], width, 
+                label=cache_names[i], color=cache_colors[i])
     
     plt.xlabel('每时隙生成任务数量 N')
     plt.ylabel('MEC缓存的任务类型总价值')
-    plt.title(f'不同任务生成数量N下各缓存策略的缓存总价值对比 (K={fixed_k}, 李雅普诺夫调度)')
+    # 去除标题
     plt.xticks(x + width * 2, n_values)
     plt.legend(loc='best')
     plt.grid(True, alpha=0.3)
+    
+    # 设置外边框为实线
+    ax = plt.gca()
+    for spine in ax.spines.values():
+        spine.set_linewidth(1.0)
+        spine.set_linestyle('-')
+    
     plt.tight_layout()
     plt.show()
     
     # 绘制第二组柱状图：缓存命中率
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(8, 8))  # 设置为正方形
     
     for i in range(num_cache_algs):
-        plt.bar(x + i * width, results_hit_rate[i, :], width, label=cache_names[i])
+        plt.bar(x + i * width, results_hit_rate[i, :], width, 
+                label=cache_names[i], color=cache_colors[i])
     
     plt.xlabel('每时隙生成任务数量 N')
     plt.ylabel('缓存命中率 (%)')
-    plt.title(f'不同任务生成数量N下各缓存策略的缓存命中率对比 (K={fixed_k}, 李雅普诺夫调度)')
+    # 去除标题
     plt.xticks(x + width * 2, n_values)
     plt.legend(loc='best')
     plt.grid(True, alpha=0.3)
+    
+    # 设置外边框为实线
+    ax = plt.gca()
+    for spine in ax.spines.values():
+        spine.set_linewidth(1.0)
+        spine.set_linestyle('-')
+    
     plt.tight_layout()
     plt.show()
     
     # 绘制第二组柱状图：缓存命中任务总优先级
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(8, 8))  # 设置为正方形
     
     for i in range(num_cache_algs):
-        plt.bar(x + i * width, results_hit_priority[i, :], width, label=cache_names[i])
+        plt.bar(x + i * width, results_hit_priority[i, :], width, 
+                label=cache_names[i], color=cache_colors[i])
     
     plt.xlabel('每时隙生成任务数量 N')
     plt.ylabel('缓存命中任务总优先级')
-    plt.title(f'不同任务生成数量N下各缓存策略的缓存命中任务总优先级对比 (K={fixed_k}, 李雅普诺夫调度)')
+    # 去除标题
     plt.xticks(x + width * 2, n_values)
     plt.legend(loc='best')
     plt.grid(True, alpha=0.3)
+    
+    # 设置外边框为实线
+    ax = plt.gca()
+    for spine in ax.spines.values():
+        spine.set_linewidth(1.0)
+        spine.set_linestyle('-')
+    
     plt.tight_layout()
     plt.show()
     

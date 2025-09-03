@@ -87,7 +87,7 @@ def plot1_lyapunov_vv_optimization():
         print(f'VV = {current_vv:.1f}, 时间平均收益 = {average_revenues[i]:.4f}')
     
     # 绘制折线图
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(8, 8))  # 设置为正方形
     
     # 定义线型和标记符号（参考绘图样式模板）
     line_style = '-'
@@ -101,14 +101,21 @@ def plot1_lyapunov_vv_optimization():
              linewidth=line_width,
              marker=marker,
              markersize=6,
-             markerfacecolor='auto')
+             markerfacecolor='auto',
+             color='#1f77b4')  # 使用标准蓝色
     
     # 图形设置
     plt.xlabel('李雅普诺夫漂移参数 VV')
     plt.ylabel('MEC时间平均收益')
-    plt.title('李雅普诺夫漂移参数VV对系统性能的影响')
+    # 去除标题
     plt.grid(True)
     plt.legend()
+    
+    # 设置外边框为实线
+    ax = plt.gca()
+    for spine in ax.spines.values():
+        spine.set_linewidth(1.0)
+        spine.set_linestyle('-')
     
     # 找出最优VV值
     max_idx = np.argmax(average_revenues)

@@ -126,8 +126,11 @@ def plot_scheduling_algorithms_comparison():
               f'最终平均积压长度: {time_series_backlog[alg_idx, -1]:.2f}')
     
     # 绘制第一组图：MEC时间平均收益
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(8, 8))  # 设置为正方形
     time_slots = np.arange(1, total_time_slots + 1)
+    
+    # 定义颜色方案（参考截图样式）
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']
     
     for alg_idx in range(num_algorithms):
         # 每50个点显示一个标记
@@ -138,18 +141,26 @@ def plot_scheduling_algorithms_comparison():
                  linewidth=line_width,
                  marker=markers[alg_idx],
                  markevery=marker_indices,
-                 markersize=6)
+                 markersize=6,
+                 color=colors[alg_idx])
     
     plt.xlabel('时隙')
     plt.ylabel('MEC时间平均收益')
-    plt.title('不同调度算法的MEC时间平均收益对比')
+    # 去除标题
     plt.legend(loc='best')
     plt.grid(True)
+    
+    # 设置外边框为实线
+    ax = plt.gca()
+    for spine in ax.spines.values():
+        spine.set_linewidth(1.0)
+        spine.set_linestyle('-')
+    
     plt.tight_layout()
     plt.show()
     
     # 绘制第一组图：任务积压队列的平均长度
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(8, 8))  # 设置为正方形
     
     for alg_idx in range(num_algorithms):
         marker_indices = list(range(0, total_time_slots, 50))
@@ -159,13 +170,21 @@ def plot_scheduling_algorithms_comparison():
                  linewidth=line_width,
                  marker=markers[alg_idx],
                  markevery=marker_indices,
-                 markersize=6)
+                 markersize=6,
+                 color=colors[alg_idx])
     
     plt.xlabel('时隙')
     plt.ylabel('任务积压队列的平均长度')
-    plt.title('不同调度算法的任务积压队列平均长度对比')
+    # 去除标题
     plt.legend(loc='best')
     plt.grid(True)
+    
+    # 设置外边框为实线
+    ax = plt.gca()
+    for spine in ax.spines.values():
+        spine.set_linewidth(1.0)
+        spine.set_linestyle('-')
+    
     plt.tight_layout()
     plt.show()
     
@@ -270,8 +289,11 @@ def plot_cache_algorithms_comparison():
               f'最终缓存价值: {cache_time_series_value[cache_idx, -1]:.2f}')
     
     # 绘制第二组图：MEC时间平均收益
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(8, 8))  # 设置为正方形
     time_slots = np.arange(1, total_time_slots + 1)
+    
+    # 定义缓存算法颜色方案（参考截图样式）
+    cache_colors = ['#1f77b4', '#ff7f0e', '#ffbb78', '#9467bd', '#c5b0d5']
     
     for cache_idx in range(num_cache_algs):
         marker_indices = list(range(0, total_time_slots, 50))
@@ -281,18 +303,26 @@ def plot_cache_algorithms_comparison():
                  linewidth=line_width,
                  marker=markers[cache_idx],
                  markevery=marker_indices,
-                 markersize=6)
+                 markersize=6,
+                 color=cache_colors[cache_idx])
     
     plt.xlabel('时隙')
     plt.ylabel('MEC时间平均收益')
-    plt.title('不同缓存算法的MEC时间平均收益对比 (李雅普诺夫调度, VV=1)')
+    # 去除标题
     plt.legend(loc='best')
     plt.grid(True)
+    
+    # 设置外边框为实线
+    ax = plt.gca()
+    for spine in ax.spines.values():
+        spine.set_linewidth(1.0)
+        spine.set_linestyle('-')
+    
     plt.tight_layout()
     plt.show()
     
     # 绘制第二组图：任务积压队列的平均长度
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(8, 8))  # 设置为正方形
     
     for cache_idx in range(num_cache_algs):
         marker_indices = list(range(0, total_time_slots, 50))
@@ -302,18 +332,26 @@ def plot_cache_algorithms_comparison():
                  linewidth=line_width,
                  marker=markers[cache_idx],
                  markevery=marker_indices,
-                 markersize=6)
+                 markersize=6,
+                 color=cache_colors[cache_idx])
     
     plt.xlabel('时隙')
     plt.ylabel('任务积压队列的平均长度')
-    plt.title('不同缓存算法的任务积压队列平均长度对比 (李雅普诺夫调度, VV=1)')
+    # 去除标题
     plt.legend(loc='best')
     plt.grid(True)
+    
+    # 设置外边框为实线
+    ax = plt.gca()
+    for spine in ax.spines.values():
+        spine.set_linewidth(1.0)
+        spine.set_linestyle('-')
+    
     plt.tight_layout()
     plt.show()
     
     # 绘制第二组图：MEC缓存的任务类型总价值
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(8, 8))  # 设置为正方形
     
     for cache_idx in range(num_cache_algs):
         marker_indices = list(range(0, total_time_slots, 50))
@@ -323,13 +361,21 @@ def plot_cache_algorithms_comparison():
                  linewidth=line_width,
                  marker=markers[cache_idx],
                  markevery=marker_indices,
-                 markersize=6)
+                 markersize=6,
+                 color=cache_colors[cache_idx])
     
     plt.xlabel('时隙')
     plt.ylabel('MEC缓存的任务类型总价值')
-    plt.title('不同缓存算法的缓存总价值对比 (李雅普诺夫调度, VV=1)')
+    # 去除标题
     plt.legend(loc='best')
     plt.grid(True)
+    
+    # 设置外边框为实线
+    ax = plt.gca()
+    for spine in ax.spines.values():
+        spine.set_linewidth(1.0)
+        spine.set_linestyle('-')
+    
     plt.tight_layout()
     plt.show()
     

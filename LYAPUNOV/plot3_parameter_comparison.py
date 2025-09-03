@@ -96,6 +96,7 @@ def plot_different_k_comparison():
             print(f'  调度算法: {alg_name} ({alg_idx+1}/{num_algorithms})')
             
             # 设置固定随机种子，确保所有算法面对相同的环境和任务
+            import random
             random.seed(42)  # 所有算法使用相同的种子
             np.random.seed(42)
             
@@ -141,49 +142,76 @@ def plot_different_k_comparison():
                   f'丢弃率: {results_droprate[alg_idx, k_idx]:.2f}%')
     
     # 绘制第一组柱状图：MEC时间平均收益
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(8, 8))  # 设置为正方形
     x = np.arange(len(k_values))
-    width = 0.2
+    width = 0.18  # 调整柱子宽度，增加间距
+    
+    # 定义颜色方案（参考截图样式）
+    colors = ['#1f77b4', '#ff7f0e', '#ffbb78', '#9467bd']
     
     for i in range(num_algorithms):
-        plt.bar(x + i * width, results_revenue[i, :], width, label=algorithm_names[i])
+        plt.bar(x + i * width, results_revenue[i, :], width, 
+                label=algorithm_names[i], color=colors[i])
     
     plt.xlabel('任务类型数量 K')
     plt.ylabel('MEC时间平均收益')
-    plt.title(f'不同任务类型数量K下的MEC时间平均收益对比 (N={fixed_n}, 缓存={Constants.total_cache_size()}Mbit)')
+    # 去除标题
     plt.xticks(x + width * 1.5, k_values)
     plt.legend(loc='best')
     plt.grid(True, alpha=0.3)
+    
+    # 设置外边框为实线
+    ax = plt.gca()
+    for spine in ax.spines.values():
+        spine.set_linewidth(1.0)
+        spine.set_linestyle('-')
+    
     plt.tight_layout()
     plt.show()
     
     # 绘制第一组柱状图：任务积压队列的平均长度
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(8, 8))  # 设置为正方形
     
     for i in range(num_algorithms):
-        plt.bar(x + i * width, results_backlog[i, :], width, label=algorithm_names[i])
+        plt.bar(x + i * width, results_backlog[i, :], width, 
+                label=algorithm_names[i], color=colors[i])
     
     plt.xlabel('任务类型数量 K')
     plt.ylabel('任务积压队列的平均长度')
-    plt.title(f'不同任务类型数量K下的任务积压队列平均长度对比 (N={fixed_n}, 缓存={Constants.total_cache_size()}Mbit)')
+    # 去除标题
     plt.xticks(x + width * 1.5, k_values)
     plt.legend(loc='best')
     plt.grid(True, alpha=0.3)
+    
+    # 设置外边框为实线
+    ax = plt.gca()
+    for spine in ax.spines.values():
+        spine.set_linewidth(1.0)
+        spine.set_linestyle('-')
+    
     plt.tight_layout()
     plt.show()
     
     # 新增：绘制第三个图 - 任务丢弃率
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(8, 8))  # 设置为正方形
     
     for i in range(num_algorithms):
-        plt.bar(x + i * width, results_droprate[i, :], width, label=algorithm_names[i])
+        plt.bar(x + i * width, results_droprate[i, :], width, 
+                label=algorithm_names[i], color=colors[i])
     
     plt.xlabel('任务类型数量 K')
     plt.ylabel('任务丢弃率 (%)')
-    plt.title(f'不同任务类型数量K下的任务丢弃率对比 (N={fixed_n}, 缓存={Constants.total_cache_size()}Mbit)')
+    # 去除标题
     plt.xticks(x + width * 1.5, k_values)
     plt.legend(loc='best')
     plt.grid(True, alpha=0.3)
+    
+    # 设置外边框为实线
+    ax = plt.gca()
+    for spine in ax.spines.values():
+        spine.set_linewidth(1.0)
+        spine.set_linestyle('-')
+    
     plt.tight_layout()
     plt.show()
     
@@ -249,6 +277,7 @@ def plot_different_n_comparison():
             print(f'  调度算法: {alg_name} ({alg_idx+1}/{num_algorithms})')
             
             # 设置固定随机种子，确保所有算法面对相同的环境和任务
+            import random
             random.seed(42)  # 所有算法使用相同的种子
             np.random.seed(42)
             
@@ -294,49 +323,76 @@ def plot_different_n_comparison():
                   f'丢弃率: {results_droprate[alg_idx, n_idx]:.2f}%')
     
     # 绘制第二组柱状图：MEC时间平均收益
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(8, 8))  # 设置为正方形
     x = np.arange(len(n_values))
-    width = 0.2
+    width = 0.18  # 调整柱子宽度，增加间距
+    
+    # 定义颜色方案（与第一组保持一致）
+    colors = ['#1f77b4', '#ff7f0e', '#ffbb78', '#9467bd']
     
     for i in range(num_algorithms):
-        plt.bar(x + i * width, results_revenue[i, :], width, label=algorithm_names[i])
+        plt.bar(x + i * width, results_revenue[i, :], width, 
+                label=algorithm_names[i], color=colors[i])
     
     plt.xlabel('每时隙生成任务数量 N')
     plt.ylabel('MEC时间平均收益')
-    plt.title(f'不同任务生成数量N下的MEC时间平均收益对比 (K={fixed_k}, 缓存={Constants.total_cache_size()}Mbit)')
+    # 去除标题
     plt.xticks(x + width * 1.5, n_values)
     plt.legend(loc='best')
     plt.grid(True, alpha=0.3)
+    
+    # 设置外边框为实线
+    ax = plt.gca()
+    for spine in ax.spines.values():
+        spine.set_linewidth(1.0)
+        spine.set_linestyle('-')
+    
     plt.tight_layout()
     plt.show()
     
     # 绘制第二组柱状图：任务积压队列的平均长度
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(8, 8))  # 设置为正方形
     
     for i in range(num_algorithms):
-        plt.bar(x + i * width, results_backlog[i, :], width, label=algorithm_names[i])
+        plt.bar(x + i * width, results_backlog[i, :], width, 
+                label=algorithm_names[i], color=colors[i])
     
     plt.xlabel('每时隙生成任务数量 N')
     plt.ylabel('任务积压队列的平均长度')
-    plt.title(f'不同任务生成数量N下的任务积压队列平均长度对比 (K={fixed_k}, 缓存={Constants.total_cache_size()}Mbit)')
+    # 去除标题
     plt.xticks(x + width * 1.5, n_values)
     plt.legend(loc='best')
     plt.grid(True, alpha=0.3)
+    
+    # 设置外边框为实线
+    ax = plt.gca()
+    for spine in ax.spines.values():
+        spine.set_linewidth(1.0)
+        spine.set_linestyle('-')
+    
     plt.tight_layout()
     plt.show()
     
     # 新增：绘制第三个图 - 任务丢弃率
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(8, 8))  # 设置为正方形
     
     for i in range(num_algorithms):
-        plt.bar(x + i * width, results_droprate[i, :], width, label=algorithm_names[i])
+        plt.bar(x + i * width, results_droprate[i, :], width, 
+                label=algorithm_names[i], color=colors[i])
     
     plt.xlabel('每时隙生成任务数量 N')
     plt.ylabel('任务丢弃率 (%)')
-    plt.title(f'不同任务生成数量N下的任务丢弃率对比 (K={fixed_k}, 缓存={Constants.total_cache_size()}Mbit)')
+    # 去除标题
     plt.xticks(x + width * 1.5, n_values)
     plt.legend(loc='best')
     plt.grid(True, alpha=0.3)
+    
+    # 设置外边框为实线
+    ax = plt.gca()
+    for spine in ax.spines.values():
+        spine.set_linewidth(1.0)
+        spine.set_linestyle('-')
+    
     plt.tight_layout()
     plt.show()
     
