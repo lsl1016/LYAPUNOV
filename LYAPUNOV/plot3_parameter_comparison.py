@@ -59,6 +59,8 @@ def plot_different_k_comparison():
     fixed_n = 20                        # 固定N=20
     total_time_slots = 500              # 仿真时隙数
     Constants.total_cache_size(1000)    # 设置缓存大小为1000
+    num_runs = 5                        # 多次实验取平均
+    print(f'进行 {num_runs} 次独立实验并取平均结果...')
     
     # 调度算法设置
     scheduling_algorithms = [
@@ -78,68 +80,81 @@ def plot_different_k_comparison():
     num_k = len(k_values)
     num_algorithms = len(scheduling_algorithms)
     
-    # 存储结果
-    results_revenue = np.zeros((num_algorithms, num_k))
-    results_backlog = np.zeros((num_algorithms, num_k))
-    results_droprate = np.zeros((num_algorithms, num_k))
-    
-    # 运行仿真实验
-    for k_idx, current_k in enumerate(k_values):
-        Constants.K(current_k)        # 设置任务类型数量
-        Constants.N(fixed_n)          # 设置每时隙生成任务数
-        
-        print(f'正在测试K={current_k} ({k_idx+1}/{num_k})...')
-        
-        for alg_idx, algorithm in enumerate(scheduling_algorithms):
-            alg_name = algorithm_names[alg_idx]
+    # 存储所有运行的结果
+    all_runs_revenue = np.zeros((num_runs, num_algorithms, num_k))
+    all_runs_backlog = np.zeros((num_runs, num_algorithms, num_k))
+    all_runs_droprate = np.zeros((num_runs, num_algorithms, num_k))
+
+    # 进行多次独立实验
+    for run in range(num_runs):
+        print(f'\n--- 第 {run + 1}/{num_runs} 次实验 ---')
+        # 运行仿真实验
+        for k_idx, current_k in enumerate(k_values):
+            Constants.K(current_k)        # 设置任务类型数量
+            Constants.N(fixed_n)          # 设置每时隙生成任务数
             
-            print(f'  调度算法: {alg_name} ({alg_idx+1}/{num_algorithms})')
+            print(f'  正在测试K={current_k} ({k_idx+1}/{num_k})...')
             
-            # 设置固定随机种子，确保所有算法面对相同的环境和任务
-            import random
-            random.seed(42)  # 所有算法使用相同的种子
-            np.random.seed(42)
-            
-            # 创建仿真器
-            sim = Simulator(total_time_slots)
-            
-            # 设置调度策略
-            sim.set_schedule_strategy(algorithm, Constants.VV_DEFAULT)
-            
-            # 设置缓存策略（无缓存调度除外）
-            if algorithm != Constants.NoCacheSchedule:
-                sim.set_cache_strategy(Constants.Knapsack)
-            else:
-                sim.MEC.set_cache_enabled(False)
-            
-            # 运行仿真（静默模式）
-            try:
-                # 临时重定向输出
-                original_print = print
-                import builtins
-                builtins.print = lambda *args, **kwargs: None
+            for alg_idx, algorithm in enumerate(scheduling_algorithms):
+                alg_name = algorithm_names[alg_idx]
                 
-                sim.run_simulation()
+                # print(f'  调度算法: {alg_name} ({alg_idx+1}/{num_algorithms})') # 静默模式
                 
-                # 恢复print
-                builtins.print = original_print
-            except Exception as e:
-                builtins.print = original_print
-                print(f'    仿真过程中出错: {e}')
-                continue
-            
-            # 获取统计结果
-            stats = sim.get_statistics()
-            results_revenue[alg_idx, k_idx] = stats.AverageRevenue
-            results_backlog[alg_idx, k_idx] = stats.AverageBacklogQueueLength
-            if stats.TotalTasksGenerated > 0:
-                results_droprate[alg_idx, k_idx] = stats.TotalTasksDropped / stats.TotalTasksGenerated * 100
-            else:
-                results_droprate[alg_idx, k_idx] = 0
-            
-            print(f'    完成，平均收益: {results_revenue[alg_idx, k_idx]:.4f}, '
-                  f'平均积压长度: {results_backlog[alg_idx, k_idx]:.2f}, '
-                  f'丢弃率: {results_droprate[alg_idx, k_idx]:.2f}%')
+                # 不同的实验运行使用不同的随机种子
+                # 但在同一次运行中，所有算法和参数面对相同的环境和任务
+                run_seed = 42 + run
+                random.seed(run_seed)
+                np.random.seed(run_seed)
+                
+                # 创建仿真器
+                sim = Simulator(total_time_slots)
+                
+                # 设置调度策略
+                sim.set_schedule_strategy(algorithm, Constants.VV_DEFAULT)
+                
+                # 设置缓存策略（无缓存调度除外）
+                if algorithm != Constants.NoCacheSchedule:
+                    sim.set_cache_strategy(Constants.Knapsack)
+                else:
+                    sim.MEC.set_cache_enabled(False)
+                
+                # 运行仿真（静默模式）
+                try:
+                    original_print = print
+                    import builtins
+                    builtins.print = lambda *args, **kwargs: None
+                    
+                    sim.run_simulation()
+                    
+                    builtins.print = original_print
+                except Exception as e:
+                    builtins.print = original_print
+                    print(f'    仿真过程中出错: {e}')
+                    continue
+                
+                # 获取统计结果
+                stats = sim.get_statistics()
+                all_runs_revenue[run, alg_idx, k_idx] = stats.AverageRevenue
+                all_runs_backlog[run, alg_idx, k_idx] = stats.AverageBacklogQueueLength
+                if stats.TotalTasksGenerated > 0:
+                    all_runs_droprate[run, alg_idx, k_idx] = stats.TotalTasksDropped / stats.TotalTasksGenerated * 100
+                else:
+                    all_runs_droprate[run, alg_idx, k_idx] = 0
+
+    # 计算平均结果
+    results_revenue = np.mean(all_runs_revenue, axis=0)
+    results_backlog = np.mean(all_runs_backlog, axis=0)
+    results_droprate = np.mean(all_runs_droprate, axis=0)
+    print('\n=== 所有实验的平均结果计算完成 ===')
+
+    # 打印最终的平均结果以供验证
+    for alg_idx, alg_name in enumerate(algorithm_names):
+        print(f'\n算法: {alg_name}')
+        for k_idx, current_k in enumerate(k_values):
+            print(f'  K={current_k}: '
+                  f'平均收益={results_revenue[alg_idx, k_idx]:.4f}, '
+                  f'平均积压={results_backlog[alg_idx, k_idx]:.2f}, '
+                  f'丢弃率={results_droprate[alg_idx, k_idx]:.2f}%')
     
     # 绘制第一组柱状图：MEC时间平均收益
     plt.figure(figsize=(8, 8))  # 设置为正方形
@@ -240,6 +255,8 @@ def plot_different_n_comparison():
     fixed_k = 40
     total_time_slots = 500
     Constants.total_cache_size(1000)
+    num_runs = 5  # 多次实验取平均
+    print(f'进行 {num_runs} 次独立实验并取平均结果...')
     
     # 调度算法设置
     scheduling_algorithms = [
@@ -259,68 +276,81 @@ def plot_different_n_comparison():
     num_n = len(n_values)
     num_algorithms = len(scheduling_algorithms)
     
-    # 存储结果
-    results_revenue = np.zeros((num_algorithms, num_n))
-    results_backlog = np.zeros((num_algorithms, num_n))
-    results_droprate = np.zeros((num_algorithms, num_n))  # 新增：存储任务丢弃率
-    
-    # 运行仿真实验
-    for n_idx, current_n in enumerate(n_values):
-        Constants.K(fixed_k)          # 设置任务类型数量
-        Constants.N(current_n)        # 设置每时隙生成任务数
-        
-        print(f'正在测试N={current_n} ({n_idx+1}/{num_n})...')
-        
-        for alg_idx, algorithm in enumerate(scheduling_algorithms):
-            alg_name = algorithm_names[alg_idx]
+    # 存储所有运行的结果
+    all_runs_revenue = np.zeros((num_runs, num_algorithms, num_n))
+    all_runs_backlog = np.zeros((num_runs, num_algorithms, num_n))
+    all_runs_droprate = np.zeros((num_runs, num_algorithms, num_n))
+
+    # 进行多次独立实验
+    for run in range(num_runs):
+        print(f'\n--- 第 {run + 1}/{num_runs} 次实验 ---')
+        # 运行仿真实验
+        for n_idx, current_n in enumerate(n_values):
+            Constants.K(fixed_k)          # 设置任务类型数量
+            Constants.N(current_n)        # 设置每时隙生成任务数
             
-            print(f'  调度算法: {alg_name} ({alg_idx+1}/{num_algorithms})')
+            print(f'  正在测试N={current_n} ({n_idx+1}/{num_n})...')
             
-            # 设置固定随机种子，确保所有算法面对相同的环境和任务
-            import random
-            random.seed(42)  # 所有算法使用相同的种子
-            np.random.seed(42)
-            
-            # 创建仿真器
-            sim = Simulator(total_time_slots)
-            
-            # 设置调度策略
-            sim.set_schedule_strategy(algorithm, Constants.VV_DEFAULT)
-            
-            # 设置缓存策略（无缓存调度除外）
-            if algorithm != Constants.NoCacheSchedule:
-                sim.set_cache_strategy(Constants.Knapsack)
-            else:
-                sim.MEC.set_cache_enabled(False)
-            
-            # 运行仿真（静默模式）
-            try:
-                # 临时重定向输出
-                original_print = print
-                import builtins
-                builtins.print = lambda *args, **kwargs: None
+            for alg_idx, algorithm in enumerate(scheduling_algorithms):
+                alg_name = algorithm_names[alg_idx]
                 
-                sim.run_simulation()
+                # print(f'  调度算法: {alg_name} ({alg_idx+1}/{num_algorithms})') # 静默模式
+
+                # 不同的实验运行使用不同的随机种子
+                # 但在同一次运行中，所有算法和参数面对相同的环境和任务
+                run_seed = 42 + run
+                random.seed(run_seed)
+                np.random.seed(run_seed)
                 
-                # 恢复print
-                builtins.print = original_print
-            except Exception as e:
-                builtins.print = original_print
-                print(f'    仿真过程中出错: {e}')
-                continue
-            
-            # 获取统计结果
-            stats = sim.get_statistics()
-            results_revenue[alg_idx, n_idx] = stats.AverageRevenue
-            results_backlog[alg_idx, n_idx] = stats.AverageBacklogQueueLength
-            if stats.TotalTasksGenerated > 0:
-                results_droprate[alg_idx, n_idx] = stats.TotalTasksDropped / stats.TotalTasksGenerated * 100
-            else:
-                results_droprate[alg_idx, n_idx] = 0
-            
-            print(f'    完成，平均收益: {results_revenue[alg_idx, n_idx]:.4f}, '
-                  f'平均积压长度: {results_backlog[alg_idx, n_idx]:.2f}, '
-                  f'丢弃率: {results_droprate[alg_idx, n_idx]:.2f}%')
+                # 创建仿真器
+                sim = Simulator(total_time_slots)
+                
+                # 设置调度策略
+                sim.set_schedule_strategy(algorithm, Constants.VV_DEFAULT)
+                
+                # 设置缓存策略（无缓存调度除外）
+                if algorithm != Constants.NoCacheSchedule:
+                    sim.set_cache_strategy(Constants.Knapsack)
+                else:
+                    sim.MEC.set_cache_enabled(False)
+                
+                # 运行仿真（静默模式）
+                try:
+                    original_print = print
+                    import builtins
+                    builtins.print = lambda *args, **kwargs: None
+                    
+                    sim.run_simulation()
+                    
+                    builtins.print = original_print
+                except Exception as e:
+                    builtins.print = original_print
+                    print(f'    仿真过程中出错: {e}')
+                    continue
+                
+                # 获取统计结果
+                stats = sim.get_statistics()
+                all_runs_revenue[run, alg_idx, n_idx] = stats.AverageRevenue
+                all_runs_backlog[run, alg_idx, n_idx] = stats.AverageBacklogQueueLength
+                if stats.TotalTasksGenerated > 0:
+                    all_runs_droprate[run, alg_idx, n_idx] = stats.TotalTasksDropped / stats.TotalTasksGenerated * 100
+                else:
+                    all_runs_droprate[run, alg_idx, n_idx] = 0
+
+    # 计算平均结果
+    results_revenue = np.mean(all_runs_revenue, axis=0)
+    results_backlog = np.mean(all_runs_backlog, axis=0)
+    results_droprate = np.mean(all_runs_droprate, axis=0)
+    print('\n=== 所有实验的平均结果计算完成 ===')
+
+    # 打印最终的平均结果以供验证
+    for alg_idx, alg_name in enumerate(algorithm_names):
+        print(f'\n算法: {alg_name}')
+        for n_idx, current_n in enumerate(n_values):
+            print(f'  N={current_n}: '
+                  f'平均收益={results_revenue[alg_idx, n_idx]:.4f}, '
+                  f'平均积压={results_backlog[alg_idx, n_idx]:.2f}, '
+                  f'丢弃率={results_droprate[alg_idx, n_idx]:.2f}%')
     
     # 绘制第二组柱状图：MEC时间平均收益
     plt.figure(figsize=(8, 8))  # 设置为正方形

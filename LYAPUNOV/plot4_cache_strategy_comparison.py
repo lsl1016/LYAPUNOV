@@ -60,6 +60,8 @@ def plot_cache_strategies_vs_k():
     fixed_n = 20
     total_time_slots = 500
     Constants.total_cache_size(1000)
+    num_runs = 5  # 多次实验取平均
+    print(f'进行 {num_runs} 次独立实验并取平均结果...')
     
     # 缓存算法设置
     cache_algorithms = [
@@ -81,82 +83,80 @@ def plot_cache_strategies_vs_k():
     num_k = len(k_values)
     num_cache_algs = len(cache_algorithms)
     
-    # 存储结果
-    results_revenue = np.zeros((num_cache_algs, num_k))
-    results_backlog = np.zeros((num_cache_algs, num_k))
-    results_cache_value = np.zeros((num_cache_algs, num_k))
-    results_hit_rate = np.zeros((num_cache_algs, num_k))
-    results_hit_priority = np.zeros((num_cache_algs, num_k))
-    
-    # 运行仿真实验
-    for k_idx, current_k in enumerate(k_values):
-        Constants.K(current_k)        # 设置任务类型数量
-        Constants.N(fixed_n)          # 设置每时隙生成任务数
-        
-        print(f'正在测试K={current_k} ({k_idx+1}/{num_k})...')
-        
-        for cache_idx, cache_alg in enumerate(cache_algorithms):
-            cache_name = cache_names[cache_idx]
+    # 存储所有运行的结果
+    all_runs_revenue = np.zeros((num_runs, num_cache_algs, num_k))
+    all_runs_backlog = np.zeros((num_runs, num_cache_algs, num_k))
+    all_runs_cache_value = np.zeros((num_runs, num_cache_algs, num_k))
+    all_runs_hit_rate = np.zeros((num_runs, num_cache_algs, num_k))
+    all_runs_hit_priority = np.zeros((num_runs, num_cache_algs, num_k))
+
+    # 进行多次独立实验
+    for run in range(num_runs):
+        print(f'\n--- 第 {run + 1}/{num_runs} 次实验 ---')
+        # 运行仿真实验
+        for k_idx, current_k in enumerate(k_values):
+            Constants.K(current_k)        # 设置任务类型数量
+            Constants.N(fixed_n)          # 设置每时隙生成任务数
             
-            print(f'  缓存算法: {cache_name} ({cache_idx+1}/{num_cache_algs})')
+            print(f'  正在测试K={current_k} ({k_idx+1}/{num_k})...')
             
-            # 设置固定随机种子，确保所有算法面对相同的环境和任务
-            import random
-            import numpy as np
-            random.seed(42)  # 所有算法使用相同的种子
-            np.random.seed(42)
-            
-            # 创建仿真器
-            sim = Simulator(total_time_slots)
-            
-            # 设置调度策略为李雅普诺夫调度
-            sim.set_schedule_strategy(Constants.LyapunovSchedule, Constants.VV_DEFAULT)
-            
-            # 设置缓存策略
-            sim.set_cache_strategy(cache_alg)
-            
-            # 运行仿真（静默模式）
-            try:
-                # 临时重定向输出
-                original_print = print
-                import builtins
-                builtins.print = lambda *args, **kwargs: None
+            for cache_idx, cache_alg in enumerate(cache_algorithms):
+                cache_name = cache_names[cache_idx]
                 
-                sim.run_simulation()
+                # print(f'  缓存算法: {cache_name} ({cache_idx+1}/{num_cache_algs})') # 静默模式
                 
-                # 恢复print
-                builtins.print = original_print
-            except Exception as e:
-                builtins.print = original_print
-                print(f'    仿真过程中出错: {e}')
-                continue
-            
-            # 获取统计结果
-            stats = sim.get_statistics()
-            results_revenue[cache_idx, k_idx] = stats.AverageRevenue
-            results_backlog[cache_idx, k_idx] = stats.AverageBacklogQueueLength
-            
-            # 计算缓存总价值
-            results_cache_value[cache_idx, k_idx] = sim.MEC.get_cache_total_value(sim.TaskManager)
-            
-            # 计算缓存命中率
-            if stats.TotalCacheAccess > 0:
-                results_hit_rate[cache_idx, k_idx] = stats.CacheHitCount / stats.TotalCacheAccess * 100
-            else:
-                results_hit_rate[cache_idx, k_idx] = 0
-            
-            # 计算所有任务缓存命中任务总优先级
-            total_hit_priority = 0
-            for task_type in stats.TaskTypeStats:
-                stat = stats.TaskTypeStats[task_type]
-                total_hit_priority += stat.CacheHitPrioritySum
-            results_hit_priority[cache_idx, k_idx] = total_hit_priority
-            
-            print(f'    完成，平均收益: {results_revenue[cache_idx, k_idx]:.4f}, '
-                  f'平均积压长度: {results_backlog[cache_idx, k_idx]:.2f}, '
-                  f'缓存价值: {results_cache_value[cache_idx, k_idx]:.2f}, '
-                  f'命中率: {results_hit_rate[cache_idx, k_idx]:.2f}%, '
-                  f'命中优先级: {results_hit_priority[cache_idx, k_idx]:.0f}')
+                # 不同的实验运行使用不同的随机种子
+                # 但在同一次运行中，所有算法和参数面对相同的环境和任务
+                run_seed = 42 + run
+                random.seed(run_seed)
+                np.random.seed(run_seed)
+                
+                # 创建仿真器
+                sim = Simulator(total_time_slots)
+                
+                # 设置调度策略为李雅普诺夫调度
+                sim.set_schedule_strategy(Constants.LyapunovSchedule, Constants.VV_DEFAULT)
+                
+                # 设置缓存策略
+                sim.set_cache_strategy(cache_alg)
+                
+                # 运行仿真（静默模式）
+                try:
+                    original_print = print
+                    import builtins
+                    builtins.print = lambda *args, **kwargs: None
+                    
+                    sim.run_simulation()
+                    
+                    builtins.print = original_print
+                except Exception as e:
+                    builtins.print = original_print
+                    print(f'    仿真过程中出错: {e}')
+                    continue
+                
+                # 获取统计结果
+                stats = sim.get_statistics()
+                all_runs_revenue[run, cache_idx, k_idx] = stats.AverageRevenue
+                all_runs_backlog[run, cache_idx, k_idx] = stats.AverageBacklogQueueLength
+                all_runs_cache_value[run, cache_idx, k_idx] = sim.MEC.get_cache_total_value(sim.TaskManager)
+                if stats.TotalCacheAccess > 0:
+                    all_runs_hit_rate[run, cache_idx, k_idx] = stats.CacheHitCount / stats.TotalCacheAccess * 100
+                else:
+                    all_runs_hit_rate[run, cache_idx, k_idx] = 0
+                
+                total_hit_priority = 0
+                for task_type in stats.TaskTypeStats:
+                    stat = stats.TaskTypeStats[task_type]
+                    total_hit_priority += stat.CacheHitPrioritySum
+                all_runs_hit_priority[run, cache_idx, k_idx] = total_hit_priority
+
+    # 计算平均结果
+    results_revenue = np.mean(all_runs_revenue, axis=0)
+    results_backlog = np.mean(all_runs_backlog, axis=0)
+    results_cache_value = np.mean(all_runs_cache_value, axis=0)
+    results_hit_rate = np.mean(all_runs_hit_rate, axis=0)
+    results_hit_priority = np.mean(all_runs_hit_priority, axis=0)
+    print('\n=== 所有实验的平均结果计算完成 ===')
     
     # 绘制第一组柱状图：MEC时间平均收益
     plt.figure(figsize=(8, 8))  # 设置为正方形
@@ -307,6 +307,8 @@ def plot_cache_strategies_vs_n():
     fixed_k = 50
     total_time_slots = 500
     Constants.total_cache_size(1000)
+    num_runs = 5  # 多次实验取平均
+    print(f'进行 {num_runs} 次独立实验并取平均结果...')
     
     # 缓存算法设置
     cache_algorithms = [
@@ -328,82 +330,80 @@ def plot_cache_strategies_vs_n():
     num_n = len(n_values)
     num_cache_algs = len(cache_algorithms)
     
-    # 存储结果
-    results_revenue = np.zeros((num_cache_algs, num_n))
-    results_backlog = np.zeros((num_cache_algs, num_n))
-    results_cache_value = np.zeros((num_cache_algs, num_n))
-    results_hit_rate = np.zeros((num_cache_algs, num_n))
-    results_hit_priority = np.zeros((num_cache_algs, num_n))
+    # 存储所有运行的结果
+    all_runs_revenue = np.zeros((num_runs, num_cache_algs, num_n))
+    all_runs_backlog = np.zeros((num_runs, num_cache_algs, num_n))
+    all_runs_cache_value = np.zeros((num_runs, num_cache_algs, num_n))
+    all_runs_hit_rate = np.zeros((num_runs, num_cache_algs, num_n))
+    all_runs_hit_priority = np.zeros((num_runs, num_cache_algs, num_n))
+
+    # 进行多次独立实验
+    for run in range(num_runs):
+        print(f'\n--- 第 {run + 1}/{num_runs} 次实验 ---')
+        # 运行仿真实验
+        for n_idx, current_n in enumerate(n_values):
+            Constants.K(fixed_k)          # 设置任务类型数量
+            Constants.N(current_n)        # 设置每时隙生成任务数
+            
+            print(f'  正在测试N={current_n} ({n_idx+1}/{num_n})...')
+            
+            for cache_idx, cache_alg in enumerate(cache_algorithms):
+                cache_name = cache_names[cache_idx]
+                
+                # print(f'  缓存算法: {cache_name} ({cache_idx+1}/{num_cache_algs})') # 静默模式
+                
+                # 不同的实验运行使用不同的随机种子
+                # 但在同一次运行中，所有算法和参数面对相同的环境和任务
+                run_seed = 42 + run
+                random.seed(run_seed)
+                np.random.seed(run_seed)
+                
+                # 创建仿真器
+                sim = Simulator(total_time_slots)
+                
+                # 设置调度策略为李雅普诺夫调度
+                sim.set_schedule_strategy(Constants.LyapunovSchedule, Constants.VV_DEFAULT)
+                
+                # 设置缓存策略
+                sim.set_cache_strategy(cache_alg)
+                
+                # 运行仿真（静默模式）
+                try:
+                    original_print = print
+                    import builtins
+                    builtins.print = lambda *args, **kwargs: None
+                    
+                    sim.run_simulation()
+                    
+                    builtins.print = original_print
+                except Exception as e:
+                    builtins.print = original_print
+                    print(f'    仿真过程中出错: {e}')
+                    continue
+                
+                # 获取统计结果
+                stats = sim.get_statistics()
+                all_runs_revenue[run, cache_idx, n_idx] = stats.AverageRevenue
+                all_runs_backlog[run, cache_idx, n_idx] = stats.AverageBacklogQueueLength
+                all_runs_cache_value[run, cache_idx, n_idx] = sim.MEC.get_cache_total_value(sim.TaskManager)
+                if stats.TotalCacheAccess > 0:
+                    all_runs_hit_rate[run, cache_idx, n_idx] = stats.CacheHitCount / stats.TotalCacheAccess * 100
+                else:
+                    all_runs_hit_rate[run, cache_idx, n_idx] = 0
+                
+                total_hit_priority = 0
+                for task_type in stats.TaskTypeStats:
+                    stat = stats.TaskTypeStats[task_type]
+                    total_hit_priority += stat.CacheHitPrioritySum
+                all_runs_hit_priority[run, cache_idx, n_idx] = total_hit_priority
     
-    # 运行仿真实验
-    for n_idx, current_n in enumerate(n_values):
-        Constants.K(fixed_k)          # 设置任务类型数量
-        Constants.N(current_n)        # 设置每时隙生成任务数
-        
-        print(f'正在测试N={current_n} ({n_idx+1}/{num_n})...')
-        
-        for cache_idx, cache_alg in enumerate(cache_algorithms):
-            cache_name = cache_names[cache_idx]
-            
-            print(f'  缓存算法: {cache_name} ({cache_idx+1}/{num_cache_algs})')
-            
-            # 设置固定随机种子，确保所有算法面对相同的环境和任务
-            import random
-            import numpy as np
-            random.seed(42)  # 所有算法使用相同的种子
-            np.random.seed(42)
-            
-            # 创建仿真器
-            sim = Simulator(total_time_slots)
-            
-            # 设置调度策略为李雅普诺夫调度
-            sim.set_schedule_strategy(Constants.LyapunovSchedule, Constants.VV_DEFAULT)
-            
-            # 设置缓存策略
-            sim.set_cache_strategy(cache_alg)
-            
-            # 运行仿真（静默模式）
-            try:
-                # 临时重定向输出
-                original_print = print
-                import builtins
-                builtins.print = lambda *args, **kwargs: None
-                
-                sim.run_simulation()
-                
-                # 恢复print
-                builtins.print = original_print
-            except Exception as e:
-                builtins.print = original_print
-                print(f'    仿真过程中出错: {e}')
-                continue
-            
-            # 获取统计结果
-            stats = sim.get_statistics()
-            results_revenue[cache_idx, n_idx] = stats.AverageRevenue
-            results_backlog[cache_idx, n_idx] = stats.AverageBacklogQueueLength
-            
-            # 计算缓存总价值
-            results_cache_value[cache_idx, n_idx] = sim.MEC.get_cache_total_value(sim.TaskManager)
-            
-            # 计算缓存命中率
-            if stats.TotalCacheAccess > 0:
-                results_hit_rate[cache_idx, n_idx] = stats.CacheHitCount / stats.TotalCacheAccess * 100
-            else:
-                results_hit_rate[cache_idx, n_idx] = 0
-            
-            # 计算所有任务缓存命中任务总优先级
-            total_hit_priority = 0
-            for task_type in stats.TaskTypeStats:
-                stat = stats.TaskTypeStats[task_type]
-                total_hit_priority += stat.CacheHitPrioritySum
-            results_hit_priority[cache_idx, n_idx] = total_hit_priority
-            
-            print(f'    完成，平均收益: {results_revenue[cache_idx, n_idx]:.4f}, '
-                  f'平均积压长度: {results_backlog[cache_idx, n_idx]:.2f}, '
-                  f'缓存价值: {results_cache_value[cache_idx, n_idx]:.2f}, '
-                  f'命中率: {results_hit_rate[cache_idx, n_idx]:.2f}%, '
-                  f'命中优先级: {results_hit_priority[cache_idx, n_idx]:.0f}')
+    # 计算平均结果
+    results_revenue = np.mean(all_runs_revenue, axis=0)
+    results_backlog = np.mean(all_runs_backlog, axis=0)
+    results_cache_value = np.mean(all_runs_cache_value, axis=0)
+    results_hit_rate = np.mean(all_runs_hit_rate, axis=0)
+    results_hit_priority = np.mean(all_runs_hit_priority, axis=0)
+    print('\n=== 所有实验的平均结果计算完成 ===')
     
     # 绘制第二组柱状图：MEC时间平均收益
     plt.figure(figsize=(8, 8))  # 设置为正方形
