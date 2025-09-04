@@ -8,8 +8,6 @@ plot4_cache_strategy_comparison.py - 缓存策略性能对比柱状图
 纵坐标包括：MEC时间平均收益、任务积压队列平均长度、MEC缓存任务类型总价值、
 缓存命中率、缓存命中任务总优先级
 图例为：调度算法使用LyapunovSchedule + 五种不同的缓存更新算法
-
-从MATLAB版本转换而来，保留所有原始逻辑和注释
 """
 
 import numpy as np
@@ -54,6 +52,10 @@ def plot_cache_strategies_vs_k():
     纵坐标分别为（所有时隙的） MEC的时间平均收益（总收入/总时隙）、任务积压队列的平均长度（所有任务类型的总积压长度/总时隙）、MEC缓存的任务类型总价值，
     所有时隙的缓存命中率、所有时隙的所有任务缓存命中任务总优先级
     图例为：调度算法使用LyapunovSchedule + 五种不同的缓存更新算法（FIFO、LRU、LFU、Priority、Knapsack）"""
+    
+    # 导入必要的库
+    import random
+    import numpy as np
     
     # 实验参数设置
     k_values = [40, 50, 60, 70, 80]
@@ -170,11 +172,14 @@ def plot_cache_strategies_vs_k():
         plt.bar(x + i * width, results_revenue[i, :], width, 
                 label=cache_names[i], color=cache_colors[i])
     
-    plt.xlabel('任务类型数量 K')
-    plt.ylabel('MEC时间平均收益')
+    plt.xlabel('任务类型数量 K', fontsize=22)
+    plt.ylabel('MEC时间平均收益', fontsize=22)
     # 去除标题
-    plt.xticks(x + width * 2, k_values)
-    plt.legend(loc='best')
+    plt.xticks(x + width * 2, k_values, fontsize=14)
+    plt.yticks(fontsize=14)
+    legend = plt.legend(loc='best', fontsize=14)
+    legend.get_frame().set_edgecolor('black')
+    legend.get_frame().set_linewidth(1.0)
     plt.grid(True, alpha=0.3)
     
     # 设置外边框为实线
@@ -193,11 +198,14 @@ def plot_cache_strategies_vs_k():
         plt.bar(x + i * width, results_backlog[i, :], width, 
                 label=cache_names[i], color=cache_colors[i])
     
-    plt.xlabel('任务类型数量 K')
-    plt.ylabel('任务积压队列的平均长度')
+    plt.xlabel('任务类型数量 K', fontsize=22)
+    plt.ylabel('任务积压队列的平均长度', fontsize=22)
     # 去除标题
-    plt.xticks(x + width * 2, k_values)
-    plt.legend(loc='best')
+    plt.xticks(x + width * 2, k_values, fontsize=14)
+    plt.yticks(fontsize=14)
+    legend = plt.legend(loc='best', fontsize=14)
+    legend.get_frame().set_edgecolor('black')
+    legend.get_frame().set_linewidth(1.0)
     plt.grid(True, alpha=0.3)
     
     # 设置外边框为实线
@@ -216,11 +224,14 @@ def plot_cache_strategies_vs_k():
         plt.bar(x + i * width, results_cache_value[i, :], width, 
                 label=cache_names[i], color=cache_colors[i])
     
-    plt.xlabel('任务类型数量 K')
-    plt.ylabel('MEC缓存的任务类型总价值')
+    plt.xlabel('任务类型数量 K', fontsize=22)
+    plt.ylabel('MEC缓存的任务类型总价值', fontsize=22)
     # 去除标题
-    plt.xticks(x + width * 2, k_values)
-    plt.legend(loc='best')
+    plt.xticks(x + width * 2, k_values, fontsize=14)
+    plt.yticks(fontsize=14)
+    legend = plt.legend(loc='best', fontsize=14)
+    legend.get_frame().set_edgecolor('black')
+    legend.get_frame().set_linewidth(1.0)
     plt.grid(True, alpha=0.3)
     
     # 设置外边框为实线
@@ -239,11 +250,14 @@ def plot_cache_strategies_vs_k():
         plt.bar(x + i * width, results_hit_rate[i, :], width, 
                 label=cache_names[i], color=cache_colors[i])
     
-    plt.xlabel('任务类型数量 K')
-    plt.ylabel('缓存命中率 (%)')
+    plt.xlabel('任务类型数量 K', fontsize=22)
+    plt.ylabel('缓存命中率 (%)', fontsize=22)
     # 去除标题
-    plt.xticks(x + width * 2, k_values)
-    plt.legend(loc='best')
+    plt.xticks(x + width * 2, k_values, fontsize=14)
+    plt.yticks(fontsize=14)
+    legend = plt.legend(loc='best', fontsize=14)
+    legend.get_frame().set_edgecolor('black')
+    legend.get_frame().set_linewidth(1.0)
     plt.grid(True, alpha=0.3)
     
     # 设置外边框为实线
@@ -262,11 +276,14 @@ def plot_cache_strategies_vs_k():
         plt.bar(x + i * width, results_hit_priority[i, :], width, 
                 label=cache_names[i], color=cache_colors[i])
     
-    plt.xlabel('任务类型数量 K')
-    plt.ylabel('缓存命中任务总优先级')
+    plt.xlabel('任务类型数量 K', fontsize=22)
+    plt.ylabel('缓存命中任务总优先级', fontsize=22)
     # 去除标题
-    plt.xticks(x + width * 2, k_values)
-    plt.legend(loc='best')
+    plt.xticks(x + width * 2, k_values, fontsize=14)
+    plt.yticks(fontsize=14)
+    legend = plt.legend(loc='best', fontsize=14)
+    legend.get_frame().set_edgecolor('black')
+    legend.get_frame().set_linewidth(1.0)
     plt.grid(True, alpha=0.3)
     
     # 设置外边框为实线
@@ -301,6 +318,10 @@ def plot_cache_strategies_vs_n():
     纵坐标分别为（所有时隙的） MEC的时间平均收益（总收入/总时隙）、任务积压队列的平均长度（所有任务类型的总积压长度/总时隙）、MEC缓存的任务类型总价值，
     所有时隙的缓存命中率、所有时隙的所有任务缓存命中任务总优先级
     图例为：调度算法使用LyapunovSchedule + 五种不同的缓存更新算法（FIFO、LRU、LFU、Priority、Knapsack）"""
+    
+    # 导入必要的库
+    import random
+    import numpy as np
     
     # 实验参数设置
     n_values = [10, 15, 20, 25, 30]
@@ -417,11 +438,14 @@ def plot_cache_strategies_vs_n():
         plt.bar(x + i * width, results_revenue[i, :], width, 
                 label=cache_names[i], color=cache_colors[i])
     
-    plt.xlabel('每时隙生成任务数量 N')
-    plt.ylabel('MEC时间平均收益')
+    plt.xlabel('每时隙生成任务数量 N', fontsize=22)
+    plt.ylabel('MEC时间平均收益', fontsize=22)
     # 去除标题
-    plt.xticks(x + width * 2, n_values)
-    plt.legend(loc='best')
+    plt.xticks(x + width * 2, n_values, fontsize=14)
+    plt.yticks(fontsize=14)
+    legend = plt.legend(loc='best', fontsize=14)
+    legend.get_frame().set_edgecolor('black')
+    legend.get_frame().set_linewidth(1.0)
     plt.grid(True, alpha=0.3)
     
     # 设置外边框为实线
@@ -440,11 +464,14 @@ def plot_cache_strategies_vs_n():
         plt.bar(x + i * width, results_backlog[i, :], width, 
                 label=cache_names[i], color=cache_colors[i])
     
-    plt.xlabel('每时隙生成任务数量 N')
-    plt.ylabel('任务积压队列的平均长度')
+    plt.xlabel('每时隙生成任务数量 N', fontsize=22)
+    plt.ylabel('任务积压队列的平均长度', fontsize=22)
     # 去除标题
-    plt.xticks(x + width * 2, n_values)
-    plt.legend(loc='best')
+    plt.xticks(x + width * 2, n_values, fontsize=14)
+    plt.yticks(fontsize=14)
+    legend = plt.legend(loc='best', fontsize=14)
+    legend.get_frame().set_edgecolor('black')
+    legend.get_frame().set_linewidth(1.0)
     plt.grid(True, alpha=0.3)
     
     # 设置外边框为实线
@@ -463,11 +490,14 @@ def plot_cache_strategies_vs_n():
         plt.bar(x + i * width, results_cache_value[i, :], width, 
                 label=cache_names[i], color=cache_colors[i])
     
-    plt.xlabel('每时隙生成任务数量 N')
-    plt.ylabel('MEC缓存的任务类型总价值')
+    plt.xlabel('每时隙生成任务数量 N', fontsize=22)
+    plt.ylabel('MEC缓存的任务类型总价值', fontsize=22)
     # 去除标题
-    plt.xticks(x + width * 2, n_values)
-    plt.legend(loc='best')
+    plt.xticks(x + width * 2, n_values, fontsize=14)
+    plt.yticks(fontsize=14)
+    legend = plt.legend(loc='best', fontsize=14)
+    legend.get_frame().set_edgecolor('black')
+    legend.get_frame().set_linewidth(1.0)
     plt.grid(True, alpha=0.3)
     
     # 设置外边框为实线
@@ -486,11 +516,14 @@ def plot_cache_strategies_vs_n():
         plt.bar(x + i * width, results_hit_rate[i, :], width, 
                 label=cache_names[i], color=cache_colors[i])
     
-    plt.xlabel('每时隙生成任务数量 N')
-    plt.ylabel('缓存命中率 (%)')
+    plt.xlabel('每时隙生成任务数量 N', fontsize=22)
+    plt.ylabel('缓存命中率 (%)', fontsize=22)
     # 去除标题
-    plt.xticks(x + width * 2, n_values)
-    plt.legend(loc='best')
+    plt.xticks(x + width * 2, n_values, fontsize=14)
+    plt.yticks(fontsize=14)
+    legend = plt.legend(loc='best', fontsize=14)
+    legend.get_frame().set_edgecolor('black')
+    legend.get_frame().set_linewidth(1.0)
     plt.grid(True, alpha=0.3)
     
     # 设置外边框为实线
@@ -509,11 +542,14 @@ def plot_cache_strategies_vs_n():
         plt.bar(x + i * width, results_hit_priority[i, :], width, 
                 label=cache_names[i], color=cache_colors[i])
     
-    plt.xlabel('每时隙生成任务数量 N')
-    plt.ylabel('缓存命中任务总优先级')
+    plt.xlabel('每时隙生成任务数量 N', fontsize=22)
+    plt.ylabel('缓存命中任务总优先级', fontsize=22)
     # 去除标题
-    plt.xticks(x + width * 2, n_values)
-    plt.legend(loc='best')
+    plt.xticks(x + width * 2, n_values, fontsize=14)
+    plt.yticks(fontsize=14)
+    legend = plt.legend(loc='best', fontsize=16)
+    legend.get_frame().set_edgecolor('black')
+    legend.get_frame().set_linewidth(1.0)
     plt.grid(True, alpha=0.3)
     
     # 设置外边框为实线

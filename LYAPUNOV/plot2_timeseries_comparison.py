@@ -56,7 +56,7 @@ def plot_scheduling_algorithms_comparison():
     total_time_slots = 500      # 仿真时隙数
     Constants.K(40)             # 任务类型数量
     Constants.N(20)             # 每时隙生成任务数
-    num_runs = 5                # 多次实验取平均
+    num_runs = 1                # 多次实验取平均
     print(f'进行 {num_runs} 次独立实验并取平均结果...')
     
     # 调度算法设置
@@ -156,11 +156,17 @@ def plot_scheduling_algorithms_comparison():
                  markersize=6,
                  color=colors[alg_idx])
     
-    plt.xlabel('时隙')
-    plt.ylabel('MEC时间平均收益')
+    plt.xlabel('时隙', fontsize=22)
+    plt.ylabel('MEC时间平均收益', fontsize=22)
     # 去除标题
-    plt.legend(loc='best')
+    legend = plt.legend(loc='best', fontsize=14)
+    legend.get_frame().set_edgecolor('black')
+    legend.get_frame().set_linewidth(1.0)
     plt.grid(True)
+    
+    # 设置坐标轴刻度字体大小
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
     
     # 设置外边框为实线
     ax = plt.gca()
@@ -185,11 +191,17 @@ def plot_scheduling_algorithms_comparison():
                  markersize=6,
                  color=colors[alg_idx])
     
-    plt.xlabel('时隙')
-    plt.ylabel('任务积压队列的平均长度')
+    plt.xlabel('时隙', fontsize=22)
+    plt.ylabel('任务积压队列的平均长度', fontsize=22)
     # 去除标题
-    plt.legend(loc='best')
+    legend = plt.legend(loc='best', fontsize=14)
+    legend.get_frame().set_edgecolor('black')
+    legend.get_frame().set_linewidth(1.0)
     plt.grid(True)
+    
+    # 设置坐标轴刻度字体大小
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
     
     # 设置外边框为实线
     ax = plt.gca()
@@ -331,11 +343,17 @@ def plot_cache_algorithms_comparison():
                  markersize=6,
                  color=cache_colors[cache_idx])
     
-    plt.xlabel('时隙')
-    plt.ylabel('MEC时间平均收益')
+    plt.xlabel('时隙', fontsize=22)
+    plt.ylabel('MEC时间平均收益', fontsize=22)
     # 去除标题
-    plt.legend(loc='best')
+    legend = plt.legend(loc='best', fontsize=14)
+    legend.get_frame().set_edgecolor('black')
+    legend.get_frame().set_linewidth(1.0)
     plt.grid(True)
+    
+    # 设置坐标轴刻度字体大小
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
     
     # 设置外边框为实线
     ax = plt.gca()
@@ -360,11 +378,17 @@ def plot_cache_algorithms_comparison():
                  markersize=6,
                  color=cache_colors[cache_idx])
     
-    plt.xlabel('时隙')
-    plt.ylabel('任务积压队列的平均长度')
+    plt.xlabel('时隙', fontsize=22)
+    plt.ylabel('任务积压队列的平均长度', fontsize=22)
     # 去除标题
-    plt.legend(loc='best')
+    legend = plt.legend(loc='best', fontsize=14)
+    legend.get_frame().set_edgecolor('black')
+    legend.get_frame().set_linewidth(1.0)
     plt.grid(True)
+    
+    # 设置坐标轴刻度字体大小
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
     
     # 设置外边框为实线
     ax = plt.gca()
@@ -389,11 +413,17 @@ def plot_cache_algorithms_comparison():
                  markersize=6,
                  color=cache_colors[cache_idx])
     
-    plt.xlabel('时隙')
-    plt.ylabel('MEC缓存的任务类型总价值')
+    plt.xlabel('时隙', fontsize=22)
+    plt.ylabel('MEC缓存的任务类型总价值', fontsize=22)
     # 去除标题
-    plt.legend(loc='best')
+    legend = plt.legend(loc='best', fontsize=14)
+    legend.get_frame().set_edgecolor('black')
+    legend.get_frame().set_linewidth(1.0)
     plt.grid(True)
+    
+    # 设置坐标轴刻度字体大小
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
     
     # 设置外边框为实线
     ax = plt.gca()

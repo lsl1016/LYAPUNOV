@@ -105,11 +105,17 @@ def plot1_lyapunov_vv_optimization():
              color='#1f77b4')  # 使用标准蓝色
     
     # 图形设置
-    plt.xlabel('李雅普诺夫漂移参数 VV')
-    plt.ylabel('MEC时间平均收益')
+    plt.xlabel('李雅普诺夫漂移参数 VV', fontsize=22)
+    plt.ylabel('MEC时间平均收益', fontsize=22)
     # 去除标题
     plt.grid(True)
-    plt.legend()
+    legend = plt.legend(fontsize=14)
+    legend.get_frame().set_edgecolor('black')
+    legend.get_frame().set_linewidth(1.0)
+    
+    # 设置坐标轴刻度字体大小
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
     
     # 设置外边框为实线
     ax = plt.gca()

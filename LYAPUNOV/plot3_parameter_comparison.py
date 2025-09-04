@@ -168,11 +168,14 @@ def plot_different_k_comparison():
         plt.bar(x + i * width, results_revenue[i, :], width, 
                 label=algorithm_names[i], color=colors[i])
     
-    plt.xlabel('任务类型数量 K')
-    plt.ylabel('MEC时间平均收益')
+    plt.xlabel('任务类型数量 K', fontsize=22)
+    plt.ylabel('MEC时间平均收益', fontsize=22)
     # 去除标题
-    plt.xticks(x + width * 1.5, k_values)
-    plt.legend(loc='best')
+    plt.xticks(x + width * 1.5, k_values, fontsize=14)
+    plt.yticks(fontsize=14)
+    legend = plt.legend(loc='best', fontsize=14)
+    legend.get_frame().set_edgecolor('black')
+    legend.get_frame().set_linewidth(1.0)
     plt.grid(True, alpha=0.3)
     
     # 设置外边框为实线
@@ -191,11 +194,14 @@ def plot_different_k_comparison():
         plt.bar(x + i * width, results_backlog[i, :], width, 
                 label=algorithm_names[i], color=colors[i])
     
-    plt.xlabel('任务类型数量 K')
-    plt.ylabel('任务积压队列的平均长度')
+    plt.xlabel('任务类型数量 K', fontsize=22)
+    plt.ylabel('任务积压队列的平均长度', fontsize=22)
     # 去除标题
-    plt.xticks(x + width * 1.5, k_values)
-    plt.legend(loc='best')
+    plt.xticks(x + width * 1.5, k_values, fontsize=14)
+    plt.yticks(fontsize=14)
+    legend = plt.legend(loc='best', fontsize=14)
+    legend.get_frame().set_edgecolor('black')
+    legend.get_frame().set_linewidth(1.0)
     plt.grid(True, alpha=0.3)
     
     # 设置外边框为实线
@@ -214,11 +220,14 @@ def plot_different_k_comparison():
         plt.bar(x + i * width, results_droprate[i, :], width, 
                 label=algorithm_names[i], color=colors[i])
     
-    plt.xlabel('任务类型数量 K')
-    plt.ylabel('任务丢弃率 (%)')
+    plt.xlabel('任务类型数量 K', fontsize=22)
+    plt.ylabel('任务丢弃率 (%)', fontsize=22)
     # 去除标题
-    plt.xticks(x + width * 1.5, k_values)
-    plt.legend(loc='best')
+    plt.xticks(x + width * 1.5, k_values, fontsize=14)
+    plt.yticks(fontsize=14)
+    legend = plt.legend(loc='best', fontsize=14)
+    legend.get_frame().set_edgecolor('black')
+    legend.get_frame().set_linewidth(1.0)
     plt.grid(True, alpha=0.3)
     
     # 设置外边框为实线
@@ -249,6 +258,10 @@ def plot_different_n_comparison():
     横坐标取单时隙产生的不同任务数量 N= [10,20,30,40,50], 任务类型数量 K固定为 40 ，totalCacheSize(1000)
     纵坐标分别为（所有时隙的） MEC的时间平均收益（总收入/总时隙）、任务积压队列的平均长度（所有任务类型的总积压长度/总时隙）
     图例为：四种调度算法 + 缓存更新算法使用 Knapsack"""
+        # 导入必要的库
+    import random
+    import numpy as np
+    
     
     # 实验参数设置
     n_values = [10, 20, 30, 40, 50]
@@ -364,11 +377,14 @@ def plot_different_n_comparison():
         plt.bar(x + i * width, results_revenue[i, :], width, 
                 label=algorithm_names[i], color=colors[i])
     
-    plt.xlabel('每时隙生成任务数量 N')
-    plt.ylabel('MEC时间平均收益')
+    plt.xlabel('每时隙生成任务数量 N', fontsize=22)
+    plt.ylabel('MEC时间平均收益', fontsize=22)
     # 去除标题
-    plt.xticks(x + width * 1.5, n_values)
-    plt.legend(loc='best')
+    plt.xticks(x + width * 1.5, n_values, fontsize=14)
+    plt.yticks(fontsize=14)
+    legend = plt.legend(loc='best', fontsize=14)
+    legend.get_frame().set_edgecolor('black')
+    legend.get_frame().set_linewidth(1.0)
     plt.grid(True, alpha=0.3)
     
     # 设置外边框为实线
@@ -387,11 +403,14 @@ def plot_different_n_comparison():
         plt.bar(x + i * width, results_backlog[i, :], width, 
                 label=algorithm_names[i], color=colors[i])
     
-    plt.xlabel('每时隙生成任务数量 N')
-    plt.ylabel('任务积压队列的平均长度')
+    plt.xlabel('每时隙生成任务数量 N', fontsize=22)
+    plt.ylabel('任务积压队列的平均长度', fontsize=22)
     # 去除标题
-    plt.xticks(x + width * 1.5, n_values)
-    plt.legend(loc='best')
+    plt.xticks(x + width * 1.5, n_values, fontsize=14)
+    plt.yticks(fontsize=14)
+    legend = plt.legend(loc='best', fontsize=14)
+    legend.get_frame().set_edgecolor('black')
+    legend.get_frame().set_linewidth(1.0)
     plt.grid(True, alpha=0.3)
     
     # 设置外边框为实线
@@ -410,11 +429,14 @@ def plot_different_n_comparison():
         plt.bar(x + i * width, results_droprate[i, :], width, 
                 label=algorithm_names[i], color=colors[i])
     
-    plt.xlabel('每时隙生成任务数量 N')
-    plt.ylabel('任务丢弃率 (%)')
+    plt.xlabel('每时隙生成任务数量 N', fontsize=22)
+    plt.ylabel('任务丢弃率 (%)', fontsize=22)
     # 去除标题
-    plt.xticks(x + width * 1.5, n_values)
-    plt.legend(loc='best')
+    plt.xticks(x + width * 1.5, n_values, fontsize=14)
+    plt.yticks(fontsize=14)
+    legend = plt.legend(loc='best', fontsize=14)
+    legend.get_frame().set_edgecolor('black')
+    legend.get_frame().set_linewidth(1.0)
     plt.grid(True, alpha=0.3)
     
     # 设置外边框为实线
