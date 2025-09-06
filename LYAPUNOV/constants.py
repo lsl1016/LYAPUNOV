@@ -1,9 +1,15 @@
 """
 系统常量定义类
+论文中的参数：在计算时请把 M 也带上，我程序代码里没有带，对其它的参数做了量级的转换，实际上是和论文里一样的
+
+System Constants:
+The parameters in the paper are provided, please add M when calculating, I did not bring it in the program code, and I converted the other parameters to the same level as the paper, in fact, it is the same as the paper.
 """
 
 class Constants:
-    """系统常量定义类"""
+    """系统常量定义类
+       System Constants:
+    """
     
     # 虚拟节点相关常量
     V = 10      # 虚拟节点数量
@@ -24,7 +30,7 @@ class Constants:
     MIN_CK = 1200      # 最小计算复杂度（提高计算需求）
     MAX_CK = 2000      # 最大计算复杂度
 
-    MIN_METAK = 60     # 最小元数据量 (Mbit)
+    MIN_METAK = 40     # 最小元数据量 (Mbit)
     MAX_METAK = 100    # 最大元数据量 (Mbit)
 
     MIN_PRIORITY = 1   # 最小优先级
@@ -32,13 +38,13 @@ class Constants:
     
     # 收益计算参数
     WHIT = 1.0   # 缓存命中收入增益系数 
-    WCOM = 0.2   # 任务计算收入增益系数 
-    AFIE = 0.02  # MEC运行每焦耳的电价 
+    WCOM = 0.6   # 任务计算收入增益系数 
+    AFIE = 0.2  # MEC运行每焦耳的电价 
     NMT = 0.8    # MEC的能量系数 
     BETA = 0.1  # 缓存单bit数据的消耗系数 
     
     # 调度算法参数
-    VV_DEFAULT = 0.004   # 默认李雅普诺夫漂移参数 
+    VV_DEFAULT = 4*10**2   # 默认李雅普诺夫漂移参数 
     
     # 缓存更新策略枚举
     FIFO = 1      # 先进先出

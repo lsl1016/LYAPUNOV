@@ -18,6 +18,12 @@ except ImportError:
     from scheduler import Scheduler
     from stats_classes import SimulationStats
 
+# 导入日志工具
+try:
+     from .logger import logger
+except ImportError:
+     from logger import logger
+       
 
 class Simulator:
     """Simulator 仿真器"""
@@ -58,12 +64,7 @@ class Simulator:
         
     def run_time_slot(self):
         """运行单个时隙"""
-        # 导入日志工具
-        try:
-            from .logger import logger
-        except ImportError:
-            from logger import logger
-            
+     
         # 记录时隙开始
         logger.separator("=", 80)
         logger.info(f"开始执行时隙 {self.CurrentTimeSlot}")

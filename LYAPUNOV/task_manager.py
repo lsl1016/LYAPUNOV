@@ -49,7 +49,7 @@ class TaskManager:
             # 初始化积压队列
             self.BacklogQueue[i] = []
             # 打印任务类型静态信息
-            logger.info(f'TaskTypes: {self.TaskTypes[i].Type}, {self.TaskTypes[i].Priority}, {self.TaskTypes[i].Ck}, {self.TaskTypes[i].MetaK}, {self.TaskTypes[i].PK}')
+            logger.info(f'TaskTypes: 类型{self.TaskTypes[i].Type}, 优先级{self.TaskTypes[i].Priority}, 计算复杂度{self.TaskTypes[i].Ck}, 元数据量大小{self.TaskTypes[i].MetaK}, 产生概率{self.TaskTypes[i].PK}')
 
     def generate_task(self, task_type, current_time_slot):
         """根据任务类型生成具体任务"""

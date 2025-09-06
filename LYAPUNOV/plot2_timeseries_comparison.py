@@ -15,7 +15,6 @@ try:
 except ImportError:
     from font_config import setup_chinese_font
 
-#导入日志工具
 try:
     from .logger import logger
 except ImportError:
@@ -55,7 +54,7 @@ def plot_scheduling_algorithms_comparison():
     import numpy as np
     
     # 实验参数设置
-    total_time_slots = 1000      # 仿真时隙数
+    total_time_slots = 100      # 仿真时隙数
     Constants.K(40)             # 任务类型数量
     Constants.N(80)             # 每时隙生成任务数
     num_runs = 1                # 多次实验取平均
@@ -104,7 +103,7 @@ def plot_scheduling_algorithms_comparison():
             logger.info(f'  测试调度算法: {alg_name} ({alg_idx+1}/{num_algorithms})...')
             # 不同的实验运行使用不同的随机种子
             # 但在同一次运行中，所有算法面对相同的环境和任务
-            run_seed = 12 + run
+            run_seed = 18 + run
             random.seed(run_seed)
             np.random.seed(run_seed)
             
