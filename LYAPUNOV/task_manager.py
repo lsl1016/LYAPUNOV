@@ -1,12 +1,10 @@
 """
 任务管理器类
-从MATLAB版本转换而来，保留所有原始逻辑和注释
 """
 
 import random
 import math
 from datetime import datetime
-# 处理导入问题
 try:
     from .constants import Constants
     from .task_classes import Task, TaskType
@@ -219,6 +217,13 @@ class TaskManager:
             bkr = wkr - occupied_slots
 
         return bkr
+
+    def get_all_backlog_count(self):
+        """获取所有积压队列中的任务数量"""
+        all_count = 0
+        for task_type in self.BacklogQueue:
+            all_count += len(self.BacklogQueue[task_type])
+        return all_count
 
     def print_task_type_static_info(self):
         """追加打印任务类型的静态信息 到 log.txt文件中"""

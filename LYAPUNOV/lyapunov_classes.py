@@ -1,10 +1,8 @@
 """
 李雅普诺夫队列相关类
-从MATLAB版本转换而来，保留所有原始逻辑和注释
 """
 
 import math
-# 处理导入问题
 try:
     from .constants import Constants
 except ImportError:
@@ -36,7 +34,6 @@ class LyapunovManager:
     def update_queue(self, task_type, bk, dropped_count, ak, task_manager):
         """
         更新队列
-        TODO：需要修正下面这个函数，以及相关接口参数：
         Qk(t+1) = max{Qk(t) - bk(t) - 当前类型丢弃的任务数量*wkr, 0} + ak(t)*wkr
         
         参数:
@@ -48,12 +45,12 @@ class LyapunovManager:
             q = self.Queues[task_type]
             tt = task_manager.TaskTypes[task_type]
             
-            # 使用一个代表性的mkr（平均值）来计算wkr
+            # TODO: 这个mkr 应该是算出来的 
+            # 从这个类型任务的积压队列中选择一个成功计算任务所需要计算频率最小的 freq，这个任务的mkr是真正的mkr
+            # 所需要计算频率的计算方式为：mkr*ck / (skr - mkr的年龄)
             avg_mkr = (Constants.MIN_MKR + Constants.MAX_MKR) / 2
             wkr = self._calculate_wkr(avg_mkr, tt.Ck)
 
-            # 根据TODO修正公式
-            # Qk(t+1) = max{Qk(t) - bk(t) - droppedCount*wkr, 0} + ak*wkr
             new_length = max(q.QueueLength - bk - dropped_count * wkr, 0) + ak * wkr
             
             q.QueueLength = new_length

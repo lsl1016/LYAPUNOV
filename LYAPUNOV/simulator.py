@@ -189,7 +189,7 @@ class Simulator:
             self.Statistics.AverageRevenue = self.Statistics.TotalRevenue
         
         # 记录用于绘图的时序数据
-        self.Statistics.record_timeseries_data(self.CurrentTimeSlot + 1, self.MEC, self.TaskManager, self.LyapunovManager)
+        self.Statistics.record_timeseries_data(self.CurrentTimeSlot + 1, self.MEC, self.TaskManager)
         
     def print_statistics(self):
         """打印统计信息"""
@@ -220,25 +220,8 @@ class Simulator:
         print(f'最终收入: {self.MEC.Income:.2f}')
         print(f'最终成本: {self.MEC.Cost:.2f}')
         
-        # 计算平均队列长度
-        total_lyapunov_queue_length = 0
-        K = Constants.K()
-        for i in range(1, K + 1):
-            total_lyapunov_queue_length += self.LyapunovManager.get_queue_length(i)
-        self.Statistics.AverageLyapunovQueueLength = total_lyapunov_queue_length / K
-        print(f'平均队列长度: {self.Statistics.AverageLyapunovQueueLength:.2f}')
-        
-        # 积压队列平均长度（每个任务类型的平均积压长度）
-        total_backlog_queue_length = 0
-        for i in range(1, K + 1):
-            total_backlog_queue_length += self.TaskManager.get_backlog_count(i)
-        self.Statistics.AverageBacklogQueueLength = total_backlog_queue_length / K
-        print(f'每个任务类型的平均积压队列长度: {self.Statistics.AverageBacklogQueueLength:.2f}')
-        
-        # 时间平均积压队列长度（用于绘图对比）
-        if self.TotalTimeSlots > 0:
-            time_avg_backlog = total_backlog_queue_length / self.TotalTimeSlots
-            print(f'时间平均积压队列长度: {time_avg_backlog:.2f}')
+        print(f'平均队列长度: {self.LyapunovManager.get_all_queue_lengths()}')
+        print(f'平均积压队列长度: {self.TaskManager.get_all_backlog_count()}')
         
         # 打印各任务类型统计
         print('\n=== 任务类型统计 ===')

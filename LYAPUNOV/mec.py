@@ -1,12 +1,10 @@
 """
 MEC多接入边缘计算节点类
-从MATLAB版本转换而来，保留所有原始逻辑和注释
 """
 
 import random
 import math
 
-# 处理导入问题
 try:
     from .constants import Constants
     from .virtual_node import VirtualNode
@@ -113,7 +111,7 @@ class MEC:
             return False
         
         # 计算需要的时隙数
-        required_slots = self._calculate_wkr(mkr, ck)
+        required_slots = self._calculate_required_slots(mkr, ck, node.ComputeFrequency)
         
         # 调度任务
         node.IsIdle = False
@@ -125,7 +123,7 @@ class MEC:
     def update_nodes(self):
         """
         更新所有虚拟节点状态（每个时隙调用）
-        返回一个dict, key=taskType, value=count (这里count总是1)
+        返回一个dict, key=taskType, value=count
         """
         completed_task_types_map = {}
         
@@ -455,3 +453,8 @@ class MEC:
     def _calculate_wkr(mkr, ck):
         """计算wkr(t) - 虚拟节点以最小计算频率计算任务所占用的时隙数量"""
         return math.ceil((mkr * ck / Constants.FM) / Constants.Tslot)
+    
+    @staticmethod
+    def _calculate_required_slots(mkr,ck,freq):
+        """计算所需时隙数量"""
+        return math.ceil((mkr * ck / freq) / Constants.Tslot)

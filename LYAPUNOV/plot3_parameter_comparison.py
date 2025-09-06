@@ -157,7 +157,7 @@ def plot_different_k_comparison():
                   f'丢弃率={results_droprate[alg_idx, k_idx]:.2f}%')
     
     # 绘制第一组柱状图：MEC时间平均收益
-    plt.figure(figsize=(8, 8))  # 设置为正方形
+    plt.figure(figsize=(8, 7))  # 设置为正方形
     x = np.arange(len(k_values))
     width = 0.18  # 调整柱子宽度，增加间距
     
@@ -188,7 +188,7 @@ def plot_different_k_comparison():
     plt.show()
     
     # 绘制第一组柱状图：任务积压队列的平均长度
-    plt.figure(figsize=(8, 8))  # 设置为正方形
+    plt.figure(figsize=(8, 7))  # 设置为正方形
     
     for i in range(num_algorithms):
         plt.bar(x + i * width, results_backlog[i, :], width, 
@@ -214,7 +214,7 @@ def plot_different_k_comparison():
     plt.show()
     
     # 新增：绘制第三个图 - 任务丢弃率
-    plt.figure(figsize=(8, 8))  # 设置为正方形
+    plt.figure(figsize=(8, 7))  # 设置为正方形
     
     for i in range(num_algorithms):
         plt.bar(x + i * width, results_droprate[i, :], width, 
@@ -366,7 +366,7 @@ def plot_different_n_comparison():
                   f'丢弃率={results_droprate[alg_idx, n_idx]:.2f}%')
     
     # 绘制第二组柱状图：MEC时间平均收益
-    plt.figure(figsize=(8, 8))  # 设置为正方形
+    plt.figure(figsize=(8, 7))  # 设置为正方形
     x = np.arange(len(n_values))
     width = 0.18  # 调整柱子宽度，增加间距
     
@@ -397,7 +397,7 @@ def plot_different_n_comparison():
     plt.show()
     
     # 绘制第二组柱状图：任务积压队列的平均长度
-    plt.figure(figsize=(8, 8))  # 设置为正方形
+    plt.figure(figsize=(8, 7))  # 设置为正方形
     
     for i in range(num_algorithms):
         plt.bar(x + i * width, results_backlog[i, :], width, 
@@ -423,7 +423,7 @@ def plot_different_n_comparison():
     plt.show()
     
     # 新增：绘制第三个图 - 任务丢弃率
-    plt.figure(figsize=(8, 8))  # 设置为正方形
+    plt.figure(figsize=(8, 7))  # 设置为正方形
     
     for i in range(num_algorithms):
         plt.bar(x + i * width, results_droprate[i, :], width, 

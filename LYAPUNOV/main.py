@@ -1,6 +1,5 @@
 """
 主程序文件 - MEC系统仿真
-从MATLAB版本转换而来，保留所有原始逻辑和注释
 """
 
 from .constants import Constants

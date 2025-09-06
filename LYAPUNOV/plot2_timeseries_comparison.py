@@ -5,22 +5,18 @@ plot2_timeseries_comparison.py - 时序性能对比折线图
 第一组：四种调度算法的时序性能对比（统一使用背包缓存算法）
 第二组：五种缓存算法的时序性能对比（使用李雅普诺夫调度算法）
 
-从MATLAB版本转换而来，保留所有原始逻辑和注释
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
 
-# 配置中文字体支持
 try:
     from .font_config import setup_chinese_font
 except ImportError:
     from font_config import setup_chinese_font
 
-# 设置中文字体
 setup_chinese_font()
 
-# 处理导入问题
 try:
     from .constants import Constants
     from .simulator import Simulator
@@ -138,7 +134,7 @@ def plot_scheduling_algorithms_comparison():
     print('\n=== 所有实验的平均结果计算完成 ===')
     
     # 绘制第一组图：MEC时间平均收益
-    plt.figure(figsize=(8, 8))  # 设置为正方形
+    plt.figure(figsize=(8, 7))  # 设置为正方形
     time_slots = np.arange(1, total_time_slots + 1)
     
     # 定义颜色方案（参考截图样式）
@@ -178,7 +174,7 @@ def plot_scheduling_algorithms_comparison():
     plt.show()
     
     # 绘制第一组图：任务积压队列的平均长度
-    plt.figure(figsize=(8, 8))  # 设置为正方形
+    plt.figure(figsize=(8, 7))  # 设置为正方形
     
     for alg_idx in range(num_algorithms):
         marker_indices = list(range(0, total_time_slots, 50))
@@ -326,7 +322,7 @@ def plot_cache_algorithms_comparison():
     print('\n=== 所有实验的平均结果计算完成 ===')
     
     # 绘制第二组图：MEC时间平均收益
-    plt.figure(figsize=(8, 8))  # 设置为正方形
+    plt.figure(figsize=(8, 7))  # 设置为正方形
     time_slots = np.arange(1, total_time_slots + 1)
     
     # 定义缓存算法颜色方案（参考截图样式）
@@ -365,7 +361,7 @@ def plot_cache_algorithms_comparison():
     plt.show()
     
     # 绘制第二组图：任务积压队列的平均长度
-    plt.figure(figsize=(8, 8))  # 设置为正方形
+    plt.figure(figsize=(8, 7))  # 设置为正方形
     
     for cache_idx in range(num_cache_algs):
         marker_indices = list(range(0, total_time_slots, 50))
@@ -400,7 +396,7 @@ def plot_cache_algorithms_comparison():
     plt.show()
     
     # 绘制第二组图：MEC缓存的任务类型总价值
-    plt.figure(figsize=(8, 8))  # 设置为正方形
+    plt.figure(figsize=(8, 7))  # 设置为正方形
     
     for cache_idx in range(num_cache_algs):
         marker_indices = list(range(0, total_time_slots, 50))

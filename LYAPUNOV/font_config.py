@@ -11,9 +11,6 @@ import os
 
 
 def setup_chinese_font():
-    """设置中文字体支持"""
-    
-    # 检测操作系统
     system = platform.system()
     
     if system == 'Windows':
@@ -39,7 +36,6 @@ def setup_chinese_font():
             'SimHei'                # 黑体
         ]
     
-    # 尝试设置可用的中文字体
     font_set = False
     for font_name in chinese_fonts:
         try:
@@ -81,45 +77,3 @@ def get_available_chinese_fonts():
             chinese_fonts.append(font_name)
     
     return list(set(chinese_fonts))
-
-
-def test_chinese_display():
-    """测试中文显示效果"""
-    import numpy as np
-    
-    # 创建测试图形
-    fig, ax = plt.subplots(figsize=(10, 6))
-    
-    # 测试数据
-    x = np.array([1, 2, 3, 4, 5])
-    y = np.array([2, 4, 6, 8, 10])
-    
-    # 绘制图形
-    ax.plot(x, y, 'o-', label='测试数据')
-    ax.set_xlabel('横坐标')
-    ax.set_ylabel('纵坐标')
-    ax.set_title('中文字体测试图表')
-    ax.legend()
-    ax.grid(True)
-    
-    # 添加中文文本注释
-    ax.text(3, 6, '这是中文文本测试', fontsize=12, ha='center')
-    
-    plt.tight_layout()
-    plt.show()
-    
-    print("中文字体测试完成！")
-
-
-if __name__ == "__main__":
-    print("=== 中文字体配置测试 ===")
-    
-    # 显示可用字体
-    available_fonts = get_available_chinese_fonts()
-    print(f"系统中可用的中文字体: {available_fonts}")
-    
-    # 设置中文字体
-    setup_chinese_font()
-    
-    # 测试中文显示
-    test_chinese_display()

@@ -87,7 +87,7 @@ def plot1_lyapunov_vv_optimization():
         print(f'VV = {current_vv:.1f}, 时间平均收益 = {average_revenues[i]:.4f}')
     
     # 绘制折线图
-    plt.figure(figsize=(8, 8))  # 设置为正方形
+    plt.figure(figsize=(8, 7))  # 设置为正方形
     
     # 定义线型和标记符号（参考绘图样式模板）
     line_style = '-'

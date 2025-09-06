@@ -1,6 +1,5 @@
 """
 test_mec_system.py - MEC系统测试和示例程序
-从MATLAB版本转换而来，保留所有原始逻辑和注释
 """
 
 from .constants import Constants

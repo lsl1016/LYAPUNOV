@@ -1,9 +1,7 @@
 """
 统计相关类
-从MATLAB版本转换而来，保留所有原始逻辑和注释
 """
 
-# 处理导入问题
 try:
     from .constants import Constants
 except ImportError:
@@ -34,9 +32,6 @@ class SimulationStats:
         self.CacheHitCount = 0              # 缓存命中次数
         self.TotalCacheAccess = 0           # 总缓存访问次数（统计最后所有时隙总的信息）
         
-        self.AverageLyapunovQueueLength = 0 # 李雅普诺夫队列平均长度
-        self.AverageBacklogQueueLength = 0  # 挤压队列平均长度
-
         self.TotalRevenue = 0               # 总收益
         self.AverageRevenue = 0             # 时间平均收益 （总收益/当前时隙数）
 
@@ -48,7 +43,6 @@ class SimulationStats:
             'cache_hit_rates': [],
             'completion_rates': [],
             'revenues': [],
-            'queue_lengths': [],
             'cache_utilizations': [],
             'node_utilizations': []
         }
@@ -58,7 +52,7 @@ class SimulationStats:
         for i in range(1, K + 1):
             self.TaskTypeStats[i] = TaskTypeStat()
     
-    def record_timeseries_data(self, time_slot, mec, task_manager, lyapunov_manager):
+    def record_timeseries_data(self, time_slot, mec, task_manager):
         """记录时序数据用于绘图"""
         self.timeseries_data['time_slots'].append(time_slot)
         
@@ -78,14 +72,6 @@ class SimulationStats:
         
         # 收益
         self.timeseries_data['revenues'].append(mec.Revenue)
-        
-        # 平均队列长度
-        total_queue_length = 0
-        K = Constants.K()
-        for i in range(1, K + 1):
-            total_queue_length += lyapunov_manager.get_queue_length(i)
-        avg_queue_length = total_queue_length / K
-        self.timeseries_data['queue_lengths'].append(avg_queue_length)
         
         # 缓存利用率
         self.timeseries_data['cache_utilizations'].append(mec.get_cache_utilization())

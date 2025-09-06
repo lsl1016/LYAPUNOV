@@ -161,7 +161,7 @@ def plot_cache_strategies_vs_k():
     print('\n=== 所有实验的平均结果计算完成 ===')
     
     # 绘制第一组柱状图：MEC时间平均收益
-    plt.figure(figsize=(8, 8))  # 设置为正方形
+    plt.figure(figsize=(8, 7))  # 设置为正方形
     x = np.arange(len(k_values))
     width = 0.14  # 调整柱子宽度，增加间距
     
@@ -192,7 +192,7 @@ def plot_cache_strategies_vs_k():
     plt.show()
     
     # 绘制第一组柱状图：任务积压队列的平均长度
-    plt.figure(figsize=(8, 8))  # 设置为正方形
+    plt.figure(figsize=(8, 7))  # 设置为正方形
     
     for i in range(num_cache_algs):
         plt.bar(x + i * width, results_backlog[i, :], width, 
@@ -218,7 +218,7 @@ def plot_cache_strategies_vs_k():
     plt.show()
     
     # 绘制第一组柱状图：MEC缓存的任务类型总价值
-    plt.figure(figsize=(8, 8))  # 设置为正方形
+    plt.figure(figsize=(8, 7))  # 设置为正方形
     
     for i in range(num_cache_algs):
         plt.bar(x + i * width, results_cache_value[i, :], width, 
@@ -244,7 +244,7 @@ def plot_cache_strategies_vs_k():
     plt.show()
     
     # 绘制第一组柱状图：缓存命中率
-    plt.figure(figsize=(8, 8))  # 设置为正方形
+    plt.figure(figsize=(8, 7))  # 设置为正方形
     
     for i in range(num_cache_algs):
         plt.bar(x + i * width, results_hit_rate[i, :], width, 
@@ -270,7 +270,7 @@ def plot_cache_strategies_vs_k():
     plt.show()
     
     # 绘制第一组柱状图：缓存命中任务总优先级
-    plt.figure(figsize=(8, 8))  # 设置为正方形
+    plt.figure(figsize=(8, 7))  # 设置为正方形
     
     for i in range(num_cache_algs):
         plt.bar(x + i * width, results_hit_priority[i, :], width, 
@@ -427,7 +427,7 @@ def plot_cache_strategies_vs_n():
     print('\n=== 所有实验的平均结果计算完成 ===')
     
     # 绘制第二组柱状图：MEC时间平均收益
-    plt.figure(figsize=(8, 8))  # 设置为正方形
+    plt.figure(figsize=(8, 7))  # 设置为正方形
     x = np.arange(len(n_values))
     width = 0.14  # 调整柱子宽度，增加间距
     
@@ -458,7 +458,7 @@ def plot_cache_strategies_vs_n():
     plt.show()
     
     # 绘制第二组柱状图：任务积压队列的平均长度
-    plt.figure(figsize=(8, 8))  # 设置为正方形
+    plt.figure(figsize=(8, 7))  # 设置为正方形
     
     for i in range(num_cache_algs):
         plt.bar(x + i * width, results_backlog[i, :], width, 
@@ -484,7 +484,7 @@ def plot_cache_strategies_vs_n():
     plt.show()
     
     # 绘制第二组柱状图：MEC缓存的任务类型总价值
-    plt.figure(figsize=(8, 8))  # 设置为正方形
+    plt.figure(figsize=(8, 7))  # 设置为正方形
     
     for i in range(num_cache_algs):
         plt.bar(x + i * width, results_cache_value[i, :], width, 
@@ -510,7 +510,7 @@ def plot_cache_strategies_vs_n():
     plt.show()
     
     # 绘制第二组柱状图：缓存命中率
-    plt.figure(figsize=(8, 8))  # 设置为正方形
+    plt.figure(figsize=(8, 7))  # 设置为正方形
     
     for i in range(num_cache_algs):
         plt.bar(x + i * width, results_hit_rate[i, :], width, 
@@ -536,7 +536,7 @@ def plot_cache_strategies_vs_n():
     plt.show()
     
     # 绘制第二组柱状图：缓存命中任务总优先级
-    plt.figure(figsize=(8, 8))  # 设置为正方形
+    plt.figure(figsize=(8, 7))  # 设置为正方形
     
     for i in range(num_cache_algs):
         plt.bar(x + i * width, results_hit_priority[i, :], width, 
