@@ -59,7 +59,6 @@ class TaskManager:
     def generate_random_tasks(self, current_time):
         """
         按概率生成每时隙的任务
-        TODO：我希望从长期看每个时隙生成的任务类型的数量比例是每个任务类型的概率
         """
         tasks = []
         num_tasks_to_generate = Constants.N()
@@ -138,7 +137,6 @@ class TaskManager:
 
             for task in tasks:
                 task.Age = current_time_slot - task.CreateTime
-                # 检查是否过期
                 if task.Age > task.SKR:
                     expired += 1
                 else:

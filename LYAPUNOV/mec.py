@@ -201,7 +201,7 @@ class MEC:
             node = task_info['node']
             
             frequency_ghz = node.ComputeFrequency / 1000.0
-            required_slots = self._calculate_wkr(task_info['mkr'], task_info['ck'])
+            required_slots = self._calculate_required_slots(task_info['mkr'], task_info['ck'], node.ComputeFrequency)
             
             # 注意: 此处不计算WCOM相关的收益，因为那部分在任务完成时才获得
             current_cost += Constants.AFIE * (frequency_ghz ** 3) * Constants.NMT * required_slots
