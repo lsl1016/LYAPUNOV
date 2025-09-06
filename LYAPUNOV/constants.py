@@ -21,7 +21,7 @@ class Constants:
     MIN_SKR = 6        # 最小时延预警值 (秒) 
     MAX_SKR = 10       # 最大时延预警值 (秒)
 
-    MIN_CK = 1000      # 最小计算复杂度（提高计算需求）
+    MIN_CK = 1200      # 最小计算复杂度（提高计算需求）
     MAX_CK = 2000      # 最大计算复杂度
 
     MIN_METAK = 60     # 最小元数据量 (Mbit)
@@ -31,14 +31,14 @@ class Constants:
     MAX_PRIORITY = 5   # 最大优先级
     
     # 收益计算参数
-    WHIT = 3.0   # 缓存命中收入增益系数 
+    WHIT = 1.0   # 缓存命中收入增益系数 
     WCOM = 1.2   # 任务计算收入增益系数 
     AFIE = 0.02  # MEC运行每焦耳的电价 
     NMT = 0.8    # MEC的能量系数 
     BETA = 0.01  # 缓存单bit数据的消耗系数 
     
     # 调度算法参数
-    VV_DEFAULT = 6.0   # 默认李雅普诺夫漂移参数 
+    VV_DEFAULT = 4.0   # 默认李雅普诺夫漂移参数 
     
     # 缓存更新策略枚举
     FIFO = 1      # 先进先出
@@ -55,7 +55,7 @@ class Constants:
     # 可变的全局参数（用于实验配置）
     _TOTAL_CACHE_SIZE_DEFAULT = 1000    # 总缓存大小 (Mbit)
     _K_DEFAULT = 40                     # 任务类型总数
-    _N_DEFAULT = 40                     # 每个时隙产生的任务数量
+    _N_DEFAULT = 80                     # 每个时隙产生的任务数量
     
     # 用于存储可变参数的类变量
     _total_cache_size = None

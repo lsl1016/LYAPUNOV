@@ -31,7 +31,7 @@ class LyapunovManager:
         for i in range(1, K + 1):
             self.Queues[i] = LyapunovQueue(i)
     
-    def update_queue(self, task_type, bk, dropped_count, ak, task_manager):
+    def update_queue(self, task_type, bk, dropped_count, ak, task_manager, scheduled_mkr=None):
         """
         更新队列
         Qk(t+1) = max{Qk(t) - bk(t) - 当前类型丢弃的任务数量*wkr, 0} + ak(t)*wkr
@@ -40,16 +40,20 @@ class LyapunovManager:
         bk: 本时隙完成的任务数
         dropped_count: 本时隙丢弃的任务数
         ak: 本时隙新到达的任务数
+        scheduled_mkr: 实际调度的任务的mkr值（如果有的话）
         """
         if task_type in self.Queues and task_type in task_manager.TaskTypes:
             q = self.Queues[task_type]
             tt = task_manager.TaskTypes[task_type]
             
-            # TODO: 这个mkr 应该是算出来的 
-            # 从这个类型任务的积压队列中选择一个成功计算任务所需要计算频率最小的 freq，这个任务的mkr是真正的mkr
-            # 所需要计算频率的计算方式为：mkr*ck / (skr - mkr的年龄)
-            avg_mkr = (Constants.MIN_MKR + Constants.MAX_MKR) / 2
-            wkr = self._calculate_wkr(avg_mkr, tt.Ck)
+            # 使用实际调度的任务的mkr值，如果没有则从积压队列中选择最容易满足时延约束的任务
+            if scheduled_mkr is not None:
+                mkr_to_use = scheduled_mkr
+            else:
+                # 从积压队列中选择所需计算频率最小的任务
+                mkr_to_use = self._find_best_mkr_for_type(task_type, task_manager)
+            
+            wkr = self._calculate_wkr(mkr_to_use, tt.Ck)
 
             new_length = max(q.QueueLength - bk - dropped_count * wkr, 0) + ak * wkr
             
@@ -81,6 +85,35 @@ class LyapunovManager:
             drift += 0.5 * (q.QueueLength ** 2)
         return drift
     
+    def _find_best_mkr_for_type(self, task_type, task_manager):
+        """
+        从指定类型的积压队列中选择所需计算频率最小的任务的mkr值
+        这与李雅普诺夫调度算法中的选择逻辑一致
+        """
+        all_tasks_of_type = task_manager.get_backlog_tasks(task_type)
+        if not all_tasks_of_type:
+            # 如果没有积压任务，使用平均值
+            return (Constants.MIN_MKR + Constants.MAX_MKR) / 2
+        
+        best_task = None
+        min_required_freq = float('inf')
+        
+        for current_task in all_tasks_of_type:
+            deadline_slots = current_task.SKR - current_task.Age
+            if deadline_slots <= 0:
+                continue
+            required_freq = (current_task.Ck * current_task.MKR) / (deadline_slots * Constants.Tslot) / 1e6
+            
+            if required_freq < min_required_freq:
+                min_required_freq = required_freq
+                best_task = current_task
+        
+        if best_task is not None:
+            return best_task.MKR
+        else:
+            # 如果所有任务都过期，使用平均值
+            return (Constants.MIN_MKR + Constants.MAX_MKR) / 2
+
     @staticmethod
     def _calculate_wkr(mkr, ck):
         """计算wkr(t) - 虚拟节点以最小计算频率计算任务所占用的时隙数量"""

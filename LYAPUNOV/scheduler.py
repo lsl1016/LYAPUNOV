@@ -1,6 +1,5 @@
 """
 调度器类
-从MATLAB版本转换而来，保留所有原始逻辑和注释
 """
 
 import numpy as np
@@ -18,7 +17,6 @@ class Scheduler:
     """Scheduler 调度器"""
     
     def __init__(self, algorithm, vv=None):
-        """构造函数"""
         if vv is None:
             vv = Constants.VV_DEFAULT
         self.Algorithm = algorithm
@@ -39,43 +37,80 @@ class Scheduler:
             return []
 
     def greedy_schedule(self, mec, task_manager):
-        """TODO: 修正算法"""
+        """贪心调度算法 - 将优先级最高的任务分配给计算频率最高的节点"""
         results = []
-        
-        # 获取所有积压任务和空闲节点
-        backlog_tasks = task_manager.get_all_backlog_tasks()  # TaskValue2 objects
+
+        # 获取候选任务（与李雅普诺夫算法一样，过滤缓存命中和正在计算的任务）
+        candidate_tasks = self.get_candidate_tasks(mec, task_manager)
         idle_nodes = mec.get_idle_nodes()
-        
-        # 如果没有任务或没有空闲节点，直接返回
-        if len(backlog_tasks) == 0 or len(idle_nodes) == 0:
+
+        if len(candidate_tasks) == 0 or len(idle_nodes) == 0:
             return results
+
+        num_tasks = len(candidate_tasks)
+        num_nodes = len(idle_nodes)
         
+        # 为每个候选任务选择最容易满足时延约束的具体任务实例
+        task_details = [None] * num_tasks
+
+        for i in range(num_tasks):
+            task_info = candidate_tasks[i]
+
+            # 使用与李雅普诺夫算法相同的严格任务选择逻辑
+            all_tasks_of_type = task_manager.get_backlog_tasks(task_info.TaskType)
+            best_task_for_type = None
+            min_required_freq = float('inf')
+
+            for current_task in all_tasks_of_type:
+                deadline_slots = current_task.SKR - current_task.Age
+                if deadline_slots <= 0:
+                    continue
+                required_freq = (current_task.Ck * current_task.MKR) / (deadline_slots * Constants.Tslot) / 1e6
+                
+                if required_freq < min_required_freq:
+                    min_required_freq = required_freq
+                    best_task_for_type = current_task
+
+            if best_task_for_type is None:
+                task_details[i] = None
+                continue
+            task_details[i] = best_task_for_type
+
+        # 过滤掉无效任务
+        valid_tasks = []
+        for i in range(num_tasks):
+            if task_details[i] is not None:
+                valid_tasks.append((candidate_tasks[i], task_details[i], i))
+
+        if len(valid_tasks) == 0:
+            return results
+
         # 按任务优先级降序排序
-        backlog_tasks.sort(key=lambda x: x.Priority, reverse=True)
+        valid_tasks.sort(key=lambda x: x[0].Priority, reverse=True)
         
         # 按节点计算频率降序排序
         idle_nodes.sort(key=lambda x: x.ComputeFrequency, reverse=True)
         
-        num_to_schedule = min(len(backlog_tasks), len(idle_nodes))
+        # 贪心匹配：优先级最高的任务分配给计算频率最高的节点
+        num_to_schedule = min(len(valid_tasks), len(idle_nodes))
         scheduled_task_types = set()
 
         for i in range(num_to_schedule):
-            task_info = backlog_tasks[i]
+            task_info, real_task, original_idx = valid_tasks[i]
             node = idle_nodes[i]
             
             # 跳过已调度过的任务类型
             if task_info.TaskType in scheduled_task_types:
                 continue
 
-            # 从积压队列中获取一个真实的任务实例以检查其属性
-            real_task = task_manager.peek_task_from_backlog(task_info.TaskType)
-            if real_task is None:
-                continue  # 如果队列为空，则跳过
+            # 验证节点能否满足任务的最低频率要求
+            deadline_slots = real_task.SKR - real_task.Age
+            if deadline_slots <= 0:
+                continue
+            required_freq = (real_task.Ck * real_task.MKR) / (deadline_slots * Constants.Tslot) / 1e6
             
-            # 检查时延约束
-            required_slots = task_manager.calculate_wkr(real_task.MKR, real_task.Ck)
-            if required_slots > (real_task.SKR - real_task.Age):
-                continue  # 如果不满足时延约束，则不调度
+            if node.ComputeFrequency < required_freq:
+                continue  # 如果节点频率不足，跳过
 
             # 调度任务
             if mec.schedule_task(task_info.TaskType, node.ID, real_task.MKR, real_task.Ck):
@@ -83,7 +118,7 @@ class Scheduler:
                 res.TaskType = task_info.TaskType
                 res.NodeID = node.ID
                 res.MKR = real_task.MKR
-                res.CompletedTasks = 1  # 贪心调度一次只处理一个任务
+                res.CompletedTasks = 1
                 results.append(res)
                 
                 scheduled_task_types.add(task_info.TaskType)
@@ -139,14 +174,15 @@ class Scheduler:
                     weight_matrix[i, j] = np.inf
                     continue
                 
-                required_slots = task_manager.calculate_wkr(best_task_for_type.MKR, best_task_for_type.Ck)
+                required_slots = task_manager.calculate_scheduling_slots(best_task_for_type.MKR, best_task_for_type.Ck,node.ComputeFrequency)
                 frequency_ghz = node.ComputeFrequency / 1000.0
                 energy_cost = Constants.AFIE * (frequency_ghz ** 3) * Constants.NMT * required_slots
-                service_rate = 1 / required_slots
+                
+                bkr_value = task_manager.calculate_bkr(best_task_for_type.MKR, best_task_for_type.Ck,node.ComputeFrequency,False)
                 
                 revenue = Constants.WCOM * task_info.Priority - energy_cost
                 
-                weight_matrix[i, j] = queue_length * service_rate - self.LyapunovVV * revenue
+                weight_matrix[i, j] = -queue_length * bkr_value - self.LyapunovVV * revenue
         
         # 将无效任务的权重设为无穷大
         for i in range(num_tasks):
@@ -184,6 +220,7 @@ class Scheduler:
                     res.NodeID = node.ID
                     res.MKR = real_task.MKR
                     res.CompletedTasks = 1
+                    res.Bkr = task_manager.calculate_bkr(real_task.MKR, real_task.Ck,node.ComputeFrequency,False)
                     results.append(res)
                     
                     assigned_tasks[i] = True
@@ -209,15 +246,7 @@ class Scheduler:
         
         return candidate_tasks
         
-    def sort_tasks_by_value(self, candidate_tasks):
-        """按价值（访问频率*优先级）排序任务"""
-        if len(candidate_tasks) == 0:
-            return []
-        
-        # 按价值降序排序
-        candidate_tasks.sort(key=lambda x: x.Value, reverse=True)
-        return candidate_tasks
-        
+
     def hungarian_algorithm(self, cost_matrix):
         """
         匈牙利算法实现（简化版本）
@@ -325,7 +354,7 @@ class Scheduler:
                     weight_matrix[i, j] = -np.inf
                     continue
                 
-                required_slots = task_manager.calculate_wkr(best_task_for_type.MKR, best_task_for_type.Ck)
+                required_slots = task_manager.calculate_scheduling_slots(best_task_for_type.MKR, best_task_for_type.Ck,node.ComputeFrequency)
                 frequency_ghz = node.ComputeFrequency / 1000.0
                 energy_cost = Constants.AFIE * (frequency_ghz ** 3) * Constants.NMT * required_slots
                 

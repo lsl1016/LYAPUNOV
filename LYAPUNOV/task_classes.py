@@ -61,9 +61,10 @@ class SchedulingResult:
     """SchedulingResult 调度结果"""
     # [任务类型, 虚拟节点ID, 匹配代价, 因调度而完成的时间槽增益数量]
     
-    def __init__(self, task_type=0, node_id=0, match_cost=0, completed_tasks=0):
+    def __init__(self, task_type=0, node_id=0, match_cost=0, completed_tasks=0, bkr=0):
         self.TaskType = task_type           # 任务类型
         self.NodeID = node_id              # 分配的虚拟节点ID
         self.MatchCost = match_cost        # 匹配代价
-        self.CompletedTasks = completed_tasks # 时间槽增益数
+        self.CompletedTasks = completed_tasks # 完成的任务数量
+        self.Bkr = bkr                     # 时间槽增益数量
         self.MKR = 0                       # 输入数据量（用于调度结果记录）

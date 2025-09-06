@@ -370,9 +370,7 @@ def plot_cache_strategies_vs_n():
             
             for cache_idx, cache_alg in enumerate(cache_algorithms):
                 cache_name = cache_names[cache_idx]
-                
-                # print(f'  缓存算法: {cache_name} ({cache_idx+1}/{num_cache_algs})') # 静默模式
-                
+                        
                 # 不同的实验运行使用不同的随机种子
                 # 但在同一次运行中，所有算法和参数面对相同的环境和任务
                 run_seed = 42 + run

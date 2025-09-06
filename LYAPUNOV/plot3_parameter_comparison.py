@@ -5,7 +5,6 @@ plot3_parameter_comparison.py - 不同参数下的性能对比柱状图
 第一组：不同任务类型数量K的性能对比（N=20, totalCacheSize=1000）
 第二组：不同任务生成数量N的性能对比（K=40, totalCacheSize=1000）
 
-从MATLAB版本转换而来，保留所有原始逻辑和注释
 """
 
 import numpy as np
@@ -97,12 +96,10 @@ def plot_different_k_comparison():
             
             for alg_idx, algorithm in enumerate(scheduling_algorithms):
                 alg_name = algorithm_names[alg_idx]
-                
-                # print(f'  调度算法: {alg_name} ({alg_idx+1}/{num_algorithms})') # 静默模式
-                
+                               
                 # 不同的实验运行使用不同的随机种子
                 # 但在同一次运行中，所有算法和参数面对相同的环境和任务
-                run_seed = 42 + run
+                run_seed = 12 + run
                 random.seed(run_seed)
                 np.random.seed(run_seed)
                 
@@ -344,7 +341,7 @@ def plot_different_n_comparison():
                 # 获取统计结果
                 stats = sim.get_statistics()
                 all_runs_revenue[run, alg_idx, n_idx] = stats.AverageRevenue
-                all_runs_backlog[run, alg_idx, n_idx] = stats.AverageBacklogQueueLength
+                all_runs_backlog[run, alg_idx, n_idx] = stats.AverageBacklogQueueLength #平均积压队列
                 if stats.TotalTasksGenerated > 0:
                     all_runs_droprate[run, alg_idx, n_idx] = stats.TotalTasksDropped / stats.TotalTasksGenerated * 100
                 else:

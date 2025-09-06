@@ -1,6 +1,5 @@
 """
 仿真器类
-从MATLAB版本转换而来，保留所有原始逻辑和注释
 """
 
 # 处理导入问题
@@ -127,7 +126,8 @@ class Simulator:
                     'node': self.MEC.VirtualNodes[res.NodeID - 1],  # 转换为0基索引
                     'mkr': res.MKR,
                     'ck': tt.Ck,
-                    'backlogCount': res.CompletedTasks  # 假设调度一个任务就完成一个
+                    'backlogCount': res.CompletedTasks,  # 假设调度一个任务就完成一个
+                    'bkr': res.Bkr
                 }
                 scheduled_tasks[res.TaskType] = task_info
                   
@@ -148,9 +148,7 @@ class Simulator:
                 completed_tasks[task_type] = backlog_count
 
                 self.TaskManager.remove_tasks_from_backlog(task_type, backlog_count)
-        
-        # 更新任务类型完成统计 (这部分逻辑在上面处理积压队列时已完成)
-        
+             
         # 6. 缓存更新：完成的任务类型添加到缓存
         for task_type in completed_task_types_map:
             if task_type in self.TaskManager.TaskTypes:
@@ -161,9 +159,12 @@ class Simulator:
         for task_type in range(1, K + 1):
             # 计算bk(t) - 本时隙完成的该类型任务数
             bk = 0
+            scheduled_mkr = None  # 实际调度的任务的mkr值
             for res in scheduling_results:
                 if res.TaskType == task_type:
-                    bk += res.CompletedTasks
+                    bk += res.Bkr
+                    if scheduled_mkr is None:  # 只取第一个调度结果的mkr值
+                        scheduled_mkr = res.MKR
             
             # 计算ak(t) - 本时隙新到达的该类型任务数
             ak = 0
@@ -176,7 +177,8 @@ class Simulator:
             if task_type in expired_counts:
                 dropped_count = expired_counts[task_type]
             
-            self.LyapunovManager.update_queue(task_type, bk, dropped_count, ak, self.TaskManager)
+            # 传递实际调度的任务的mkr值
+            self.LyapunovManager.update_queue(task_type, bk, dropped_count, ak, self.TaskManager, scheduled_mkr)
         
         # 8. 更新收益
         self.MEC.update_revenue(self.TaskManager, scheduled_tasks, completed_tasks, cache_hit_tasks)
@@ -190,6 +192,9 @@ class Simulator:
         
         # 记录用于绘图的时序数据
         self.Statistics.record_timeseries_data(self.CurrentTimeSlot + 1, self.MEC, self.TaskManager)
+        
+        # 更新积压队列长度统计
+        self.Statistics.update_backlog_stats(self.TaskManager)
         
     def print_statistics(self):
         """打印统计信息"""

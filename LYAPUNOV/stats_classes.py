@@ -34,6 +34,11 @@ class SimulationStats:
         
         self.TotalRevenue = 0               # 总收益
         self.AverageRevenue = 0             # 时间平均收益 （总收益/当前时隙数）
+        
+        # 积压队列长度统计
+        self.TotalBacklogLength = 0         # 所有时隙的积压队列长度总和
+        self.BacklogSampleCount = 0         # 积压队列长度采样次数
+        self.AverageBacklogQueueLength = 0  # 平均积压队列长度
 
         self.TaskTypeStats = {}             # 各任务类型统计 (dict)
         
@@ -78,3 +83,19 @@ class SimulationStats:
         
         # 节点利用率
         self.timeseries_data['node_utilizations'].append(mec.get_node_utilization())
+    
+    def update_backlog_stats(self, task_manager):
+        """更新积压队列长度统计"""
+        # 计算当前时隙的总积压队列长度
+        total_backlog = 0
+        K = Constants.K()
+        for k in range(1, K + 1):
+            total_backlog += task_manager.get_backlog_count(k)
+        
+        # 更新统计信息
+        self.TotalBacklogLength += total_backlog
+        self.BacklogSampleCount += 1
+        
+        # 计算平均积压队列长度
+        if self.BacklogSampleCount > 0:
+            self.AverageBacklogQueueLength = self.TotalBacklogLength / self.BacklogSampleCount

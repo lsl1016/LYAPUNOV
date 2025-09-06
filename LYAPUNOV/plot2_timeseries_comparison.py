@@ -49,9 +49,9 @@ def plot_scheduling_algorithms_comparison():
     import numpy as np
     
     # 实验参数设置
-    total_time_slots = 500      # 仿真时隙数
+    total_time_slots = 1000      # 仿真时隙数
     Constants.K(40)             # 任务类型数量
-    Constants.N(20)             # 每时隙生成任务数
+    Constants.N(80)             # 每时隙生成任务数
     num_runs = 1                # 多次实验取平均
     print(f'进行 {num_runs} 次独立实验并取平均结果...')
     
@@ -92,7 +92,7 @@ def plot_scheduling_algorithms_comparison():
             
             # 不同的实验运行使用不同的随机种子
             # 但在同一次运行中，所有算法面对相同的环境和任务
-            run_seed = 42 + run
+            run_seed = 12 + run
             random.seed(run_seed)
             np.random.seed(run_seed)
             
@@ -152,8 +152,8 @@ def plot_scheduling_algorithms_comparison():
                  markersize=6,
                  color=colors[alg_idx])
     
-    plt.xlabel('时隙', fontsize=22)
-    plt.ylabel('MEC时间平均收益', fontsize=22)
+    plt.xlabel('Time slot', fontsize=22)
+    plt.ylabel('MEC time average revenue', fontsize=22)
     # 去除标题
     legend = plt.legend(loc='best', fontsize=14)
     legend.get_frame().set_edgecolor('black')
@@ -187,8 +187,8 @@ def plot_scheduling_algorithms_comparison():
                  markersize=6,
                  color=colors[alg_idx])
     
-    plt.xlabel('时隙', fontsize=22)
-    plt.ylabel('任务积压队列的平均长度', fontsize=22)
+    plt.xlabel('Time slot', fontsize=22)
+    plt.ylabel('Backlog queue length', fontsize=22)
     # 去除标题
     legend = plt.legend(loc='best', fontsize=14)
     legend.get_frame().set_edgecolor('black')
@@ -232,11 +232,11 @@ def plot_cache_algorithms_comparison():
     import numpy as np
     
     # 实验参数设置
-    total_time_slots = 500      # 仿真时隙数
+    total_time_slots = 1000      # 仿真时隙数
     Constants.K(40)             # 任务类型数量
-    Constants.N(20)             # 每时隙生成任务数
+    Constants.N(80)             # 每时隙生成任务数
     vv_parameter = 1.0          # 李雅普诺夫参数VV=1
-    num_runs = 5                # 多次实验取平均
+    num_runs = 10                # 多次实验取平均
     print(f'进行 {num_runs} 次独立实验并取平均结果...')
     
     # 缓存算法设置
@@ -279,7 +279,7 @@ def plot_cache_algorithms_comparison():
             
             # 不同的实验运行使用不同的随机种子
             # 但在同一次运行中，所有算法面对相同的环境和任务
-            run_seed = 42 + run
+            run_seed = 12 + run
             random.seed(run_seed)
             np.random.seed(run_seed)
             
@@ -339,8 +339,8 @@ def plot_cache_algorithms_comparison():
                  markersize=6,
                  color=cache_colors[cache_idx])
     
-    plt.xlabel('时隙', fontsize=22)
-    plt.ylabel('MEC时间平均收益', fontsize=22)
+    plt.xlabel('Time slot', fontsize=22)
+    plt.ylabel('MEC time average revenue', fontsize=22)
     # 去除标题
     legend = plt.legend(loc='best', fontsize=14)
     legend.get_frame().set_edgecolor('black')
@@ -374,8 +374,8 @@ def plot_cache_algorithms_comparison():
                  markersize=6,
                  color=cache_colors[cache_idx])
     
-    plt.xlabel('时隙', fontsize=22)
-    plt.ylabel('任务积压队列的平均长度', fontsize=22)
+    plt.xlabel('Time slot', fontsize=22)
+    plt.ylabel('Backlog queue length', fontsize=22)
     # 去除标题
     legend = plt.legend(loc='best', fontsize=14)
     legend.get_frame().set_edgecolor('black')
@@ -409,8 +409,8 @@ def plot_cache_algorithms_comparison():
                  markersize=6,
                  color=cache_colors[cache_idx])
     
-    plt.xlabel('时隙', fontsize=22)
-    plt.ylabel('MEC缓存的任务类型总价值', fontsize=22)
+    plt.xlabel('Time slot', fontsize=22)
+    plt.ylabel('MEC cache total value', fontsize=22)
     # 去除标题
     legend = plt.legend(loc='best', fontsize=14)
     legend.get_frame().set_edgecolor('black')
