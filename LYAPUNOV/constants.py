@@ -38,7 +38,7 @@ class Constants:
     BETA = 0.1  # 缓存单bit数据的消耗系数 
     
     # 调度算法参数
-    VV_DEFAULT = 4.0   # 默认李雅普诺夫漂移参数 
+    VV_DEFAULT = 0.004   # 默认李雅普诺夫漂移参数 
     
     # 缓存更新策略枚举
     FIFO = 1      # 先进先出

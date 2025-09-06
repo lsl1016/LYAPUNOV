@@ -23,9 +23,6 @@ except ImportError:
 
 setup_chinese_font()
 
-# 禁用日志记录（读写文件，非常耗时）
-logger.set_enable_log(True)
-
 try:
     from .constants import Constants
     from .simulator import Simulator
@@ -97,6 +94,11 @@ def plot_scheduling_algorithms_comparison():
         # 运行仿真实验
         for alg_idx, algorithm in enumerate(scheduling_algorithms):
             alg_name = algorithm_names[alg_idx]
+            # 只在李雅普诺夫调度+背包缓存时开启日志记录
+            if algorithm == Constants.LyapunovSchedule:
+                logger.set_enable_log(True)
+            else:
+                logger.set_enable_log(False)
             
             print(f'  测试调度算法: {alg_name} ({alg_idx+1}/{num_algorithms})...')
             logger.info(f'  测试调度算法: {alg_name} ({alg_idx+1}/{num_algorithms})...')
