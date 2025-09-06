@@ -21,7 +21,15 @@ except ImportError:
 # 设置中文字体
 setup_chinese_font()
 
-# 处理导入问题
+# 导入日志工具
+try:
+    from .logger import logger
+except ImportError:
+    from logger import logger
+
+# 禁用日志记录
+logger.set_enable_log(False)
+
 try:
     from .constants import Constants
     from .simulator import Simulator
@@ -46,6 +54,7 @@ def plot1_lyapunov_vv_optimization():
     vv_range = [0.5, 1.0, 2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 15.0, 20.0]
     num_vv = len(vv_range)
     
+
     # 存储结果
     average_revenues = np.zeros(num_vv)
     

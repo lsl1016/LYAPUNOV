@@ -11,7 +11,11 @@ try:
 except ImportError:
     from constants import Constants
     from task_classes import SchedulingResult, TaskValue2
-
+# 导入日志工具
+try:
+    from .logger import logger
+except ImportError:
+    from logger import logger
 
 class Scheduler:
     """Scheduler 调度器"""
@@ -21,6 +25,11 @@ class Scheduler:
             vv = Constants.VV_DEFAULT
         self.Algorithm = algorithm
         self.LyapunovVV = vv
+        self.CurrentTimeSlot = 0  # 当前时隙，用于日志记录
+    
+    def update_time_slot(self, time_slot):
+        """更新当前时隙"""
+        self.CurrentTimeSlot = time_slot
         
     def schedule_tasks(self, mec, task_manager, lyapunov_manager):
         """根据指定的算法调用相应的调度函数"""
@@ -177,13 +186,16 @@ class Scheduler:
                 required_slots = task_manager.calculate_scheduling_slots(best_task_for_type.MKR, best_task_for_type.Ck,node.ComputeFrequency)
                 frequency_ghz = node.ComputeFrequency / 1000.0
                 energy_cost = Constants.AFIE * (frequency_ghz ** 3) * Constants.NMT * required_slots
+                logger.debug(f"时隙{self.CurrentTimeSlot}匹配时 - energy_cost: {energy_cost:.6f}")
                 
                 bkr_value = task_manager.calculate_bkr(best_task_for_type.MKR, best_task_for_type.Ck,node.ComputeFrequency,False)
                 
                 revenue = Constants.WCOM * task_info.Priority - energy_cost
-                
+                logger.debug(f"时隙{self.CurrentTimeSlot}匹配时 - revenue: {revenue:.6f}")
+                    
                 weight_matrix[i, j] = -queue_length * bkr_value - self.LyapunovVV * revenue
-        
+                logger.debug(f"时隙{self.CurrentTimeSlot}匹配时 - weight_matrix: {weight_matrix[i, j]:.6f}, Lyapunov队列长度：{queue_length:.2f}, 漂移项：{queue_length * bkr_value:.6f}, 收益项：{self.LyapunovVV * revenue:.6f}")
+
         # 将无效任务的权重设为无穷大
         for i in range(num_tasks):
             if task_details[i] is None:

@@ -15,7 +15,16 @@ try:
 except ImportError:
     from font_config import setup_chinese_font
 
+#导入日志工具
+try:
+    from .logger import logger
+except ImportError:
+    from logger import logger
+
 setup_chinese_font()
+
+# 禁用日志记录（读写文件，非常耗时）
+logger.set_enable_log(True)
 
 try:
     from .constants import Constants
@@ -84,12 +93,13 @@ def plot_scheduling_algorithms_comparison():
     # 进行多次独立实验
     for run in range(num_runs):
         print(f'\n--- 第 {run + 1}/{num_runs} 次实验 ---')
+        logger.info(f'第 {run + 1}/{num_runs} 次实验 ---')
         # 运行仿真实验
         for alg_idx, algorithm in enumerate(scheduling_algorithms):
             alg_name = algorithm_names[alg_idx]
             
             print(f'  测试调度算法: {alg_name} ({alg_idx+1}/{num_algorithms})...')
-            
+            logger.info(f'  测试调度算法: {alg_name} ({alg_idx+1}/{num_algorithms})...')
             # 不同的实验运行使用不同的随机种子
             # 但在同一次运行中，所有算法面对相同的环境和任务
             run_seed = 12 + run
@@ -107,7 +117,6 @@ def plot_scheduling_algorithms_comparison():
                 sim.set_cache_strategy(Constants.Knapsack)
             else:
                 sim.MEC.set_cache_enabled(False)
-            
             # 运行仿真并记录每个时隙的数据
             sim.MEC.update_time_slot(0)
             
@@ -118,7 +127,7 @@ def plot_scheduling_algorithms_comparison():
                 # 记录当前时隙的数据
                 all_runs_revenue[run, alg_idx, t] = sim.Statistics.AverageRevenue
                 
-                # 计算积压队列平均长度（当前时隙积压队列总长度 ）
+                # 当前时隙的积压队列总长度
                 total_backlog = 0
                 K = Constants.K()
                 for k in range(1, K + 1):
@@ -236,7 +245,7 @@ def plot_cache_algorithms_comparison():
     Constants.K(40)             # 任务类型数量
     Constants.N(80)             # 每时隙生成任务数
     vv_parameter = 1.0          # 李雅普诺夫参数VV=1
-    num_runs = 10                # 多次实验取平均
+    num_runs = 1                # 多次实验取平均
     print(f'进行 {num_runs} 次独立实验并取平均结果...')
     
     # 缓存算法设置

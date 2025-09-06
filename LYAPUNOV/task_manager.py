@@ -2,6 +2,12 @@
 任务管理器类
 """
 
+# 导入日志工具
+try:
+    from .logger import logger
+except ImportError:
+    from logger import logger
+
 import random
 import math
 from datetime import datetime
@@ -42,6 +48,8 @@ class TaskManager:
 
             # 初始化积压队列
             self.BacklogQueue[i] = []
+            # 打印任务类型静态信息
+            logger.info(f'TaskTypes: {self.TaskTypes[i].Type}, {self.TaskTypes[i].Priority}, {self.TaskTypes[i].Ck}, {self.TaskTypes[i].MetaK}, {self.TaskTypes[i].PK}')
 
     def generate_task(self, task_type, current_time_slot):
         """根据任务类型生成具体任务"""

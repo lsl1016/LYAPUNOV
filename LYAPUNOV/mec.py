@@ -158,58 +158,75 @@ class MEC:
         
     def update_revenue(self, task_manager, scheduled_tasks, completed_tasks, cache_hit_tasks):
         """
-        更新收益
-        TODO:修正： 当前时隙的计算收益计算方式为（在仿真函数的% 4. 调度积压队列中的任务 后计算 ）：
-        调度的任务的任务类型的计算优先级*wcom -  constants.AFIE * (frequencyGHz^3) * constants.NMT * 计算这个任务占用的时隙数量 
-        （需要注意的是如果这个任务在虚拟节点上需要多个时隙才能计算完成，不要重复计算）
-        有一种情况需要累加：那就是在未来某个时隙，在虚拟节点上计算完成获得结果，清空积压队列这个类型的任务数据时：
-        加上 ：调度的任务的任务类型的计算优先级*wcom*这一时隙的积压队列中这个类型的任务数量
-
-        TODO 修正：当前时隙的缓存命中收益为，对于当前时隙，如果缓存命中，则缓存命中收益为 
-        计算任务的计算优先级*whit*当前时隙该类型任务的命中个数 -  constants.BETA * 当前时隙该类型任务的元数据大小
-        （这个元数据大小，当前时隙同一类型任务应该只计算一次）（不要重复计算之前时隙的缓存收益了，它们应该是在之前时隙被计算过了）
+        更新收益并记录详细日志
+        
+        收益计算方式：
+        1. 计算收入 = 任务完成收入 + 缓存命中收入
+        2. 成本 = 缓存存储成本 + 计算能耗成本  
+        3. 利润 = 收入 - 成本
         
         参数:
         scheduled_tasks: dict[taskType] -> {node, mkr, ck, backlogCount}
         completed_tasks: dict[taskType] -> backlogCount
         cache_hit_tasks: dict[taskType] -> {backlogCount, metaK}
         """
+        # 导入日志工具
+        try:
+            from .logger import logger
+        except ImportError:
+            from logger import logger
 
-        current_income = 0
-        current_cost = 0
+        # 分类统计各项收入和成本
+        cache_income = 0      # 缓存命中收入
+        compute_income = 0    # 计算完成收入
+        cache_cost = 0        # 缓存存储成本
+        compute_cost = 0      # 计算能耗成本
 
-        # --- 1. 计算任务完成的收益 ---
-        # 对应TODO的第二部分：在未来某个时隙...计算完成获得结果...加上...
+        # --- 1. 计算任务完成的收入 ---
         for task_type, backlog_count in completed_tasks.items():
             if task_type in task_manager.TaskTypes:
                 tt = task_manager.TaskTypes[task_type]
-                current_income += Constants.WCOM * tt.Priority * backlog_count
+                income = Constants.WCOM * tt.Priority * backlog_count
+                compute_income += income
 
-        # --- 2. 计算缓存命中的收益和成本 ---
-        # 对应TODO: 缓存命中收益为...优先级*whit*命中个数 - BETA*元数据大小
+        # --- 2. 计算缓存命中的收入和成本 ---
         for task_type, hit_info in cache_hit_tasks.items():
             if task_type in task_manager.TaskTypes:
                 tt = task_manager.TaskTypes[task_type]
-                # 收益部分
-                current_income += Constants.WHIT * tt.Priority * hit_info['backlogCount']
-                # 成本部分 (每个命中的任务类型只计算一次元数据成本)
-                current_cost += Constants.BETA * tt.MetaK
+                # 缓存命中收入
+                income = Constants.WHIT * tt.Priority * hit_info['backlogCount']
+                cache_income += income
+                # 缓存存储成本 (每个命中的任务类型只计算一次元数据成本)
+                cost = Constants.BETA * tt.MetaK
+                cache_cost += cost
             
-        # --- 3. 计算新调度任务的成本 (主要是能耗) ---
-        # 对应TODO: ...成本为... AFIE * (frequencyGHz^3) * NMT * 时隙数量
+        # --- 3. 计算新调度任务的能耗成本 ---
         for task_type, task_info in scheduled_tasks.items():
             node = task_info['node']
-            
             frequency_ghz = node.ComputeFrequency / 1000.0
             required_slots = self._calculate_required_slots(task_info['mkr'], task_info['ck'], node.ComputeFrequency)
-            
-            # 注意: 此处不计算WCOM相关的收益，因为那部分在任务完成时才获得
-            current_cost += Constants.AFIE * (frequency_ghz ** 3) * Constants.NMT * required_slots
-            
-        # --- 4. 累加总收益和成本 ---
-        self.Income += current_income
-        self.Cost += current_cost
+            cost = Constants.AFIE * (frequency_ghz ** 3) * Constants.NMT * required_slots
+            compute_cost += cost
+
+        # --- 4. 计算总收入、成本和利润 ---
+        total_income = cache_income + compute_income
+        total_cost = cache_cost + compute_cost
+        current_profit = total_income - total_cost
+
+        # --- 5. 更新累计值 ---
+        self.Income += total_income
+        self.Cost += total_cost
         self.Revenue = self.Income - self.Cost
+
+        # --- 6. 记录详细日志 ---
+        logger.log_revenue_details(
+            self.CurrentTimeSlot,
+            cache_income,
+            compute_income, 
+            cache_cost,
+            compute_cost,
+            current_profit
+        )
         
     def get_cache_utilization(self):
         """获取缓存利用率"""

@@ -58,8 +58,19 @@ class Simulator:
         
     def run_time_slot(self):
         """运行单个时隙"""
-        # 更新MEC的当前时隙
+        # 导入日志工具
+        try:
+            from .logger import logger
+        except ImportError:
+            from logger import logger
+            
+        # 记录时隙开始
+        logger.separator("=", 80)
+        logger.info(f"开始执行时隙 {self.CurrentTimeSlot}")
+        
+        # 更新MEC和Scheduler的当前时隙
         self.MEC.update_time_slot(self.CurrentTimeSlot)
+        self.Scheduler.update_time_slot(self.CurrentTimeSlot)
         
         # 用于当前时隙收益计算的数据
         scheduled_tasks = {}
@@ -69,6 +80,7 @@ class Simulator:
         # 1. 生成新任务并处理过期任务
         new_tasks = self.TaskManager.generate_random_tasks(self.CurrentTimeSlot)
         self.Statistics.TotalTasksGenerated += len(new_tasks)
+        logger.info(f"生成新任务数量: {len(new_tasks)}")
         
         # 更新任务类型生成统计和访问统计
         for task in new_tasks:
@@ -79,6 +91,10 @@ class Simulator:
         
         # 移除过期任务
         expired_counts = self.TaskManager.remove_expired_tasks(self.CurrentTimeSlot)
+        total_expired = sum(expired_counts.values())
+        if total_expired > 0:
+            logger.info(f"移除过期任务数量: {total_expired}")
+        
         for task_type, count in expired_counts.items():
             self.Statistics.TotalTasksDropped += count
             stat = self.Statistics.TaskTypeStats[task_type]
@@ -118,6 +134,9 @@ class Simulator:
         
         # 4. 调度积压队列中的任务
         scheduling_results = self.Scheduler.schedule_tasks(self.MEC, self.TaskManager, self.LyapunovManager)
+        if len(scheduling_results) > 0:
+            logger.info(f"调度任务数量: {len(scheduling_results)}")
+        
         for res in scheduling_results:
             # 记录用于收益计算
             if res.TaskType in self.TaskManager.TaskTypes and res.NodeID > 0:
@@ -133,6 +152,9 @@ class Simulator:
                   
         # 5. 更新虚拟节点状态
         completed_task_types_map = self.MEC.update_nodes()
+        total_completed_types = len(completed_task_types_map)
+        if total_completed_types > 0:
+            logger.info(f"完成计算的任务类型数: {total_completed_types}")
 
         # 遍历所有类型积压队列，清空completedTaskTypes中存在的任务类型对应的积压队列
         # TotalTasksCompleted的统计应该等于对应的积压队列中的任务
@@ -177,8 +199,8 @@ class Simulator:
             if task_type in expired_counts:
                 dropped_count = expired_counts[task_type]
             
-            # 传递实际调度的任务的mkr值
-            self.LyapunovManager.update_queue(task_type, bk, dropped_count, ak, self.TaskManager, scheduled_mkr)
+            # 传递实际调度的任务的mkr值和当前时隙
+            self.LyapunovManager.update_queue(task_type, bk, dropped_count, ak, self.TaskManager, scheduled_mkr, self.CurrentTimeSlot)
         
         # 8. 更新收益
         self.MEC.update_revenue(self.TaskManager, scheduled_tasks, completed_tasks, cache_hit_tasks)
@@ -195,6 +217,13 @@ class Simulator:
         
         # 更新积压队列长度统计
         self.Statistics.update_backlog_stats(self.TaskManager)
+        
+        # 记录时隙结束信息
+        total_backlog = self.TaskManager.get_all_backlog_count()
+        logger.info(f"时隙 {self.CurrentTimeSlot} 执行完成")
+        logger.info(f"当前总积压任务数: {total_backlog}")
+        logger.info(f"累计总收益: {self.MEC.Revenue:.6f}")
+        logger.separator("=", 80)
         
     def print_statistics(self):
         """打印统计信息"""

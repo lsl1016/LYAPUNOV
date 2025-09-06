@@ -7,6 +7,11 @@ try:
     from .constants import Constants
 except ImportError:
     from constants import Constants
+# 导入日志工具
+try:
+    from .logger import logger
+except ImportError:
+    from logger import logger
 
 
 class LyapunovQueue:
@@ -31,7 +36,7 @@ class LyapunovManager:
         for i in range(1, K + 1):
             self.Queues[i] = LyapunovQueue(i)
     
-    def update_queue(self, task_type, bk, dropped_count, ak, task_manager, scheduled_mkr=None):
+    def update_queue(self, task_type, bk, dropped_count, ak, task_manager, scheduled_mkr=None, current_time_slot=None):
         """
         更新队列
         Qk(t+1) = max{Qk(t) - bk(t) - 当前类型丢弃的任务数量*wkr, 0} + ak(t)*wkr
@@ -41,7 +46,9 @@ class LyapunovManager:
         dropped_count: 本时隙丢弃的任务数
         ak: 本时隙新到达的任务数
         scheduled_mkr: 实际调度的任务的mkr值（如果有的话）
+        current_time_slot: 当前时隙（用于日志记录）
         """
+     
         if task_type in self.Queues and task_type in task_manager.TaskTypes:
             q = self.Queues[task_type]
             tt = task_manager.TaskTypes[task_type]
@@ -58,6 +65,10 @@ class LyapunovManager:
             new_length = max(q.QueueLength - bk - dropped_count * wkr, 0) + ak * wkr
             
             q.QueueLength = new_length
+            
+            # 记录李雅普诺夫队列更新日志
+            if current_time_slot is not None:
+                logger.debug(f"时隙{current_time_slot}，更新李雅普诺夫队列，类型={task_type}，队列长度: {new_length:.2f}")
     
     def get_queue_length(self, task_type):
         """获取指定任务类型的队列长度"""
